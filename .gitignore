@@ -13,6 +13,7 @@
 *.txt
 *.pkl
 *.pck
+*.html
 *AutoDict*
 *CVS*
 .#*
@@ -27,3 +28,6 @@
 aTGCRooStats/run_*
 aTGCRooStats/root_*
 multicrab_*
+*FR*.C
+*num*.C
+*den*.C
