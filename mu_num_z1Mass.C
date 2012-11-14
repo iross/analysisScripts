@@ -1,0 +1,62 @@
+{
+//=========Macro generated from canvas: can/can
+//=========  (Tue Nov 13 09:26:30 2012) by ROOT version5.32/00
+   TCanvas *can = new TCanvas("can", "can",1,1,600,576);
+   gStyle->SetOptFit(1);
+   gStyle->SetOptStat(0);
+   gStyle->SetOptTitle(0);
+   can->SetHighLightColor(2);
+   can->Range(40.82927,-0.1585366,128.6341,1.060976);
+   can->SetFillColor(0);
+   can->SetBorderMode(0);
+   can->SetBorderSize(2);
+   can->SetTickx(1);
+   can->SetTicky(1);
+   can->SetLeftMargin(0.15);
+   can->SetRightMargin(0.03);
+   can->SetTopMargin(0.05);
+   can->SetBottomMargin(0.13);
+   can->SetFrameFillStyle(0);
+   can->SetFrameLineWidth(2);
+   can->SetFrameBorderMode(0);
+   Double_t xAxis11[13] = {60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120}; 
+   
+   TH1F *mnum = new TH1F("mnum","mnum",12, xAxis11);
+   mnum->SetBinContent(0,487);
+   mnum->SetBinContent(1,142);
+   mnum->SetBinContent(2,159);
+   mnum->SetBinContent(3,203);
+   mnum->SetBinContent(4,245);
+   mnum->SetBinContent(5,332);
+   mnum->SetBinContent(6,1093);
+   mnum->SetBinContent(7,1759);
+   mnum->SetBinContent(8,347);
+   mnum->SetBinContent(9,88);
+   mnum->SetBinContent(10,45);
+   mnum->SetBinContent(11,37);
+   mnum->SetBinContent(12,15);
+   mnum->SetEntries(4952);
+   mnum->SetLineStyle(0);
+   mnum->SetMarkerStyle(20);
+   mnum->GetXaxis()->SetLabelFont(42);
+   mnum->GetXaxis()->SetLabelOffset(0.007);
+   mnum->GetXaxis()->SetLabelSize(0.05);
+   mnum->GetXaxis()->SetTitleSize(0.06);
+   mnum->GetXaxis()->SetTitleOffset(0.9);
+   mnum->GetXaxis()->SetTitleFont(42);
+   mnum->GetYaxis()->SetLabelFont(42);
+   mnum->GetYaxis()->SetLabelOffset(0.007);
+   mnum->GetYaxis()->SetLabelSize(0.05);
+   mnum->GetYaxis()->SetTitleSize(0.06);
+   mnum->GetYaxis()->SetTitleOffset(1.25);
+   mnum->GetYaxis()->SetTitleFont(42);
+   mnum->GetZaxis()->SetLabelFont(42);
+   mnum->GetZaxis()->SetLabelOffset(0.007);
+   mnum->GetZaxis()->SetLabelSize(0.05);
+   mnum->GetZaxis()->SetTitleSize(0.06);
+   mnum->GetZaxis()->SetTitleFont(42);
+   mnum->Draw("");
+   can->Modified();
+   can->cd();
+   can->SetSelected(can);
+}

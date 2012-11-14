@@ -1,0 +1,85 @@
+{
+//=========Macro generated from canvas: can/can
+//=========  (Tue Nov 13 09:26:28 2012) by ROOT version5.32/00
+   TCanvas *can = new TCanvas("can", "can",0,0,600,600);
+   gStyle->SetOptFit(1);
+   gStyle->SetOptStat(0);
+   gStyle->SetOptTitle(0);
+   can->SetHighLightColor(2);
+   can->Range(0,0,1,1);
+   can->SetFillColor(0);
+   can->SetBorderMode(0);
+   can->SetBorderSize(2);
+   can->SetTickx(1);
+   can->SetTicky(1);
+   can->SetLeftMargin(0.15);
+   can->SetRightMargin(0.03);
+   can->SetTopMargin(0.05);
+   can->SetBottomMargin(0.13);
+   can->SetFrameFillStyle(0);
+   can->SetFrameLineWidth(2);
+   can->SetFrameBorderMode(0);
+   
+   TGraphAsymmErrors *grae = new TGraphAsymmErrors(12);
+   grae->SetName("");
+   grae->SetTitle("");
+   grae->SetFillColor(1);
+   grae->SetMarkerStyle(20);
+   grae->SetPoint(0,62.5,0.3538933);
+   grae->SetPointError(0,2.5,2.5,0.009960752,0.01004601);
+   grae->SetPoint(1,67.5,0.3657056);
+   grae->SetPointError(1,2.5,2.5,0.009349368,0.009417342);
+   grae->SetPoint(2,72.5,0.3072473);
+   grae->SetPointError(2,2.5,2.5,0.008014407,0.008092725);
+   grae->SetPoint(3,77.5,0.2004128);
+   grae->SetPointError(3,2.5,2.5,0.005712602,0.005795139);
+   grae->SetPoint(4,82.5,0.09412382);
+   grae->SetPointError(4,2.5,2.5,0.002964596,0.003021449);
+   grae->SetPoint(5,87.5,0.04667498);
+   grae->SetPointError(5,2.5,2.5,0.001091067,0.001107478);
+   grae->SetPoint(6,92.5,0.04336667);
+   grae->SetPointError(6,2.5,2.5,0.0008243228,0.0008344184);
+   grae->SetPoint(7,97.5,0.05091218);
+   grae->SetPointError(7,2.5,2.5,0.002000891,0.002051762);
+   grae->SetPoint(8,102.5,0.07234618);
+   grae->SetPointError(8,2.5,2.5,0.004670126,0.004863133);
+   grae->SetPoint(9,107.5,0.1115269);
+   grae->SetPointError(9,2.5,2.5,0.008421568,0.008809515);
+   grae->SetPoint(10,112.5,0.1706161);
+   grae->SetPointError(10,2.5,2.5,0.01268651,0.01320672);
+   grae->SetPoint(11,117.5,0.2096531);
+   grae->SetPointError(11,2.5,2.5,0.01550897,0.01609234);
+   
+   TH1F *Graph_Graph5 = new TH1F("Graph_Graph5","",100,54,126);
+   Graph_Graph5->SetMinimum(0);
+   Graph_Graph5->SetMaximum(1);
+   Graph_Graph5->SetDirectory(0);
+   Graph_Graph5->SetStats(0);
+   Graph_Graph5->SetLineStyle(0);
+   Graph_Graph5->SetMarkerStyle(20);
+   Graph_Graph5->GetXaxis()->SetTitle("z1Mass");
+   Graph_Graph5->GetXaxis()->SetLabelFont(42);
+   Graph_Graph5->GetXaxis()->SetLabelOffset(0.007);
+   Graph_Graph5->GetXaxis()->SetLabelSize(0.05);
+   Graph_Graph5->GetXaxis()->SetTitleSize(0.06);
+   Graph_Graph5->GetXaxis()->SetTitleOffset(0.9);
+   Graph_Graph5->GetXaxis()->SetTitleFont(42);
+   Graph_Graph5->GetYaxis()->SetTitle("e Fake Rate");
+   Graph_Graph5->GetYaxis()->SetLabelFont(42);
+   Graph_Graph5->GetYaxis()->SetLabelOffset(0.007);
+   Graph_Graph5->GetYaxis()->SetLabelSize(0.05);
+   Graph_Graph5->GetYaxis()->SetTitleSize(0.06);
+   Graph_Graph5->GetYaxis()->SetTitleOffset(1.25);
+   Graph_Graph5->GetYaxis()->SetTitleFont(42);
+   Graph_Graph5->GetZaxis()->SetLabelFont(42);
+   Graph_Graph5->GetZaxis()->SetLabelOffset(0.007);
+   Graph_Graph5->GetZaxis()->SetLabelSize(0.05);
+   Graph_Graph5->GetZaxis()->SetTitleSize(0.06);
+   Graph_Graph5->GetZaxis()->SetTitleFont(42);
+   grae->SetHistogram(Graph_Graph5);
+   
+   grae->Draw("ap");
+   can->Modified();
+   can->cd();
+   can->SetSelected(can);
+}
