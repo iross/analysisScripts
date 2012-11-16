@@ -3,7 +3,7 @@ from ROOT import *
 from array import *
 from CommonSelectors import *
 
-import logging,Colorer
+import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
