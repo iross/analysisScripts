@@ -7,14 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
-ROOT.gROOT.SetBatch(True)
-
-def makeHist(tree, var,  nbin, xmin, xmax):
-    #	print "Making hist with",nbin,"bins from",xmin,"to",xmax
-    h = TH1F("temp","temp",nbin,xmin,xmax)
-    tree.Draw(var+">>temp")
-    return h
-
+#ROOT.gROOT.SetBatch(True)
 
 def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1]):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
@@ -37,7 +30,6 @@ def makeHist2D(tree, cuts, varx, nbinx, xmin, xmax, vary, nbiny, ymin, ymax, cus
                 #todo: 2d custom binning
                 h = TH1F("temp","temp",len(bins)-1,array('d',bins))
                 h.Sumw2()
-                nbin=len(bins)-1
         tree.Draw(vary+":"+varx+">>h",cuts,"")
         return h
 
@@ -118,13 +110,10 @@ def getYields(file, lumi, cuts=""):
 def fit(hist):
     logging.debug("Fitting histogram %s",hist.GetTitle())
     gSystem.Load("libRooFit")
-    mass = RooRealVar("mass","mass",0,120)
-    mean = RooRealVar("mean","mean",0,60)
-    sigma = RooRealVar("sigma","sigma",0,10)
-    Yield = RooRealVar("yield","yield",50,0,1000)
-#	hist = TH1F("hist","hist",12,0,120)
-
-#	tree.Draw("z2Mass>>hist",defineCuts(common.cuts(),stdIso("z1l1",0.275,"ele",True),stdIso("z1l2",0.275,"ele",True),"!"+stdIso("z2l1",0.275,"mu"),"!"+stdIso("z2l2",0.275,"mu"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"))
+    mass = RooRealVar("mass","mass",100,600)
+    mean = RooRealVar("mean","mean",50,0,600)
+    sigma = RooRealVar("sigma","sigma",0,100)
+    Yield = RooRealVar("yield","yield",50,0,10000)
 
     print hist.Integral(),"seen in data"
     land = RooLandau("land","land",mass,mean,sigma)
@@ -132,18 +121,19 @@ def fit(hist):
 
     totalPdf = RooAddPdf("totalPdf","total",RooArgList(land),RooArgList(Yield))
 
-    totalPdf.fitTo(data)
+    totalPdf.fitTo(data,Verbose(false))
+    c1=TCanvas("can","can",600,600)
     C = mass.frame()
     data.plotOn(C)
     totalPdf.plotOn(C)
     C.Draw()
-    raw_input("How's that fit look?")
     print mean.getVal(),"+-",mean.getErrorHi(),mean.getErrorLo()
     print sigma.getVal(),"+-",sigma.getErrorHi(),sigma.getErrorLo()
     mass.setRange("onshellReg",60,120)
     integral = totalPdf.createIntegral(RooArgSet(mass),RooArgSet(mass),"onshellReg")
     expected = integral.getVal()*Yield.getVal()
     print "Expected in on-shell region:",expected
+    return c1
 
 def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[0,1]):
     logging.debug('Measuring fakes from file:%s',file)
@@ -184,7 +174,6 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     eden.Draw()
     c1.SaveAs("ele_den_"+var+".C")
     c1.SaveAs("ele_den_"+var+".png")
-#    raw_input("Press any key to look at muons")
     muFr = TGraphAsymmErrors()
     muFr.BayesDivide(mnum,mden)
     muFr.GetYaxis().SetRangeUser(0,1.0)
@@ -206,24 +195,32 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral()]
 
-def applyFakes(file):
+def applyFakes(file,extra):
     """Apply fakerates."""
-    regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal"]
-    fakerates=measureLeptonFakes(file)
-    if "eeee" in reg or "mmee" in reg:
-        fr=fakerates[0]
-    elif "eemm" in reg or "mmmm" in reg:
-        fr=fakerates[1]
-    else:
-        sysexit("Can't figure out which fakerate to use!")
+    regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal"]
+    fakerates=measureLeptonFakes(file,extra=extra)
     for reg in regions:
-        t=file.Get(reg)
+        if "eeee" in reg or "mmee" in reg:
+            fr=fakerates[0]
+        elif "eemm" in reg or "mmmm" in reg:
+            fr=fakerates[1]
+        else:
+            sysexit("Can't figure out which fakerate to use!")
+        f=TFile(file)
+        t=f.Get(reg)
+        t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120")
         n=t.GetEntries()
-        if "AA" in regions:
+        if "AA" in reg:
             expected=n*fr*fr/(1-fr)/(1-fr)
         else:
             expected=n*fr/(1-fr)
         print reg,expected,"(",n,")"
+        h=makeHist(t,"mass","",25,100,600)
+        h.Draw()
+
+#        ctemp=fit(h)
+#        ctemp.SaveAs(reg+"_fit.png")
+        
 
 def main():
     f1 = TFile("BG_StdIso.root")
