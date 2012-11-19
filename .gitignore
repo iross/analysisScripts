@@ -4,6 +4,7 @@
 *.so
 *.d
 
+*.todo
 *.html
 *.root
 *.png
