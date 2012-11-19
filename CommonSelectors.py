@@ -68,7 +68,6 @@ z2ee = Selector([
     "z2l2mvaNonTrigPass>0",
 	"z2l1MissHits<2",
 	"z2l2MissHits<2",
-	"z2Charge==0",
     "abs(z2l1SIP)<4",
     "abs(z2l2SIP)<4",
 	])
@@ -90,7 +89,6 @@ z2mm = Selector([
     "abs(z2l2dXY)<0.5",
 #	"z2l1ValidHits>10",
 #	"z2l2ValidHits>10",
-	"z2Charge==0"
 	])
 
 z2tt = Selector([
