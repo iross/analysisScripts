@@ -29,7 +29,7 @@ def arbitrate(event1,event2, method=''):
                 return event2
         else:
             return event2
-    if method=='dummy':
+    if method is 'dummy' or method is 'BG':
         return event1
 #    if method=='bestZ1':
         #return the ZZ cand with z1 closest to nominal mass (and max z2Pt if still ambiguous)
@@ -58,6 +58,8 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
             vars.append(branch.GetName())
     for event in cleanTree:
         eventID=str(event.EVENT/event.met) #divide by met to make sure no EVENT repetitions (relevant especially to MC)
+        if arbMode is "BG":
+            eventID=str(event.EVENT/event.z2l1Phi/event.z2l2Phi) #want the combinations to be unique, not the events todo: pick Z1 first?
         if eventID not in events:
             events[eventID]={}
             myDic={}
@@ -74,12 +76,8 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
                 try:
                     tempEvent[var]=event.GetLeaf(var).GetValue()
                 except ReferenceError:
-                    continue
-            if arbMode is "BG": #for BG, we want to store all cands, so don't arbitrate (and make a new key for the event)
-                eventID=str(event.EVENT/event.met/event.z2l1Phi)
-                events[eventID]=tempEvent
-            else:
-                events[eventID]=arbitrate(events[eventID],tempEvent,method=arbMode)
+                   continue
+            events[eventID]=arbitrate(events[eventID],tempEvent,method=arbMode)
         n=n+1
         pbar.update(n)
     pbar.finish()
