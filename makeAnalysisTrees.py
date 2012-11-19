@@ -33,6 +33,7 @@ cuts["mmee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour",
 cuts["eeee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0")
 cuts["mmmm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0")
 cuts["mmee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0") #...this tree should have full selection applied right now
+cuts["eemm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0") #...this tree should have full selection applied right now
 cuts["mm"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 cuts["ee"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 
