@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
-#ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.SetBatch(True)
 
 def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1]):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
@@ -121,7 +121,7 @@ def fit(hist):
 
     totalPdf = RooAddPdf("totalPdf","total",RooArgList(land),RooArgList(Yield))
 
-    totalPdf.fitTo(data,Verbose(false))
+    totalPdf.fitTo(data)
     c1=TCanvas("can","can",600,600)
     C = mass.frame()
     data.plotOn(C)
@@ -199,6 +199,8 @@ def applyFakes(file,extra):
     """Apply fakerates."""
     regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal"]
     fakerates=measureLeptonFakes(file,extra=extra)
+    BGs={}
+    ns={}
     for reg in regions:
         if "eeee" in reg or "mmee" in reg:
             fr=fakerates[0]
@@ -208,19 +210,31 @@ def applyFakes(file,extra):
             sysexit("Can't figure out which fakerate to use!")
         f=TFile(file)
         t=f.Get(reg)
-        t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120")
+        t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
         n=t.GetEntries()
         if "AA" in reg:
             expected=n*fr*fr/(1-fr)/(1-fr)
         else:
             expected=n*fr/(1-fr)
-        print reg,expected,"(",n,")"
         h=makeHist(t,"mass","",25,100,600)
         h.Draw()
+        BGs[reg]=expected
+        ns[reg]=n
 
-#        ctemp=fit(h)
-#        ctemp.SaveAs(reg+"_fit.png")
-        
+        ctemp=fit(h)
+        ctemp.SaveAs(reg+"_fit.png")
+    #todo: dump CR, BG plots
+
+    #print out interesting stuff
+    fakerates=measureLeptonFakes(file,extra=extra)
+    for reg in sorted(BGs):
+        print reg,'--',BGs[reg],'(',ns[reg],')'
+    print "---- Final Estimates (AI+IA-AA) ----"
+    print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
+    print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
+    print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
+
+
 
 def main():
     f1 = TFile("BG_StdIso.root")
