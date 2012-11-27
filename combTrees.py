@@ -21,21 +21,28 @@ def arbitrate(event1,event2, method=''):
     """Takes a pair of events, chooses which one to keep"""
     if method=='bestZmass':
         if abs(event1['z1Mass']-91.2)<abs(event2['z1Mass']-91.2):
-            return event1
+            return [ event1 ]
         elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2):
             if (event1['z2l1Pt']+event1['z2l2Pt'] > event2['z2l1Pt']+event2['z2l2Pt']):
-                return event1
+                return [ event1 ]
             else:
-                return event2
+                return [ event2 ]
         else:
-            return event2
-    if method is 'dummy' or method is 'BG':
-        return event1
+            return [ event2 ]
+    if method is 'dummy' :
+        return [ event1 ]
+    if method is 'BG':
+        if abs(event1['z1Mass']-91.2)<abs(event2['z1Mass']-91.2):
+            return [ event1 ]
+        elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2) and event1['z2l1Pt']!=event2['z2l1Pt'] and event1['z2l2Pt']!=event2['z2l2Pt']: #same Z1 but not same fakes.. return both
+            return [ event1, event2 ]
+        else: #event 2 has better Z OR combination is the same
+            return [ event2 ]
+
 #    if method=='bestZ1':
         #return the ZZ cand with z1 closest to nominal mass (and max z2Pt if still ambiguous)
 #    else if method == '':
         #return the first
-    pass
 
 def uniquify(tree, cuts, arbMode,vars,allVars=False):
     """Takes a tree as input, applies cuts, and returns a tree with only one entry per event."""
@@ -58,8 +65,6 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
             vars.append(branch.GetName())
     for event in cleanTree:
         eventID=str(event.EVENT/event.met) #divide by met to make sure no EVENT repetitions (relevant especially to MC)
-        if arbMode is "BG":
-            eventID=str(event.EVENT/event.z2l1Phi/event.z2l2Phi) #want the combinations to be unique, not the events todo: pick Z1 first?
         if eventID not in events:
             events[eventID]={}
             myDic={}
@@ -77,7 +82,16 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
                     tempEvent[var]=event.GetLeaf(var).GetValue()
                 except ReferenceError:
                    continue
-            events[eventID]=arbitrate(events[eventID],tempEvent,method=arbMode)
+            if arbMode is "BG":
+                neweventID=str(event.EVENT/event.z2l1Phi/event.z2l2Phi) #want the combinations to be unique, not the events todo: pick Z1 first?
+                arbResult=arbitrate(events[eventID],tempEvent,method=arbMode)
+                if len(arbResult)>1:
+                    events[neweventID]=arbResult[1]
+                else:
+                    events[eventID]=arbitrate(events[eventID],tempEvent,method=arbMode)[0]
+            else:
+                arbResult=arbitrate(events[eventID],tempEvent,method=arbMode)
+                events[eventID]=arbResult[0]
         n=n+1
         pbar.update(n)
     pbar.finish()
