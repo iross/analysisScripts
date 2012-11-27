@@ -9,17 +9,17 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
 ROOT.gROOT.SetBatch(True)
 
-def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1]):
+def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1], name="temp"):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
-    h = TH1F("temp","temp",nbin,xmin,xmax)
+    h = TH1F(name,name,nbin,xmin,xmax)
     h.Sumw2()
     if customBinning:
-        h = TH1F("temp","temp",len(bins)-1,array('d',bins))
+        h = TH1F(name,name,len(bins)-1,array('d',bins))
     if overflow:
         #		print "\twas",hist.GetBinContent(nbin)
         hist.SetBinContent(nbin,hist.GetBinContent(nbin)+hist.GetBinContent(nbin+1))
 #		print "\tnow",hist.GetBinContent(nbin)
-    tree.Draw(var+">>temp",cuts,"goff")
+    tree.Draw(var+">>"+name,cuts,"goff")
     return h
 
 def makeHist2D(tree, cuts, varx, nbinx, xmin, xmax, vary, nbiny, ymin, ymax, customBinning=False, bins=[0,1]):
@@ -137,7 +137,11 @@ def fit(hist):
 
 def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[0,1]):
     logging.debug('Measuring fakes from file:%s',file)
-    file = TFile(file)
+    try:
+        print "This will work a bit better if you pass an open TFile!"
+        file = TFile(file)
+    except TypeError:
+        pass
     if customBinning:
         enum = TH1F("enum","enum",len(bins)-1,array('d',bins))
         eden = TH1F("eden","eden",len(bins)-1,array('d',bins))
@@ -162,7 +166,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     c1=TCanvas("can","can",600,600)
     eleFr = TGraphAsymmErrors()
     eleFr.BayesDivide(enum,eden)
-    eleFr.GetYaxis().SetRangeUser(0,1.0)
+    eleFr.GetYaxis().SetRangeUser(0,0.5)
     eleFr.GetXaxis().SetTitle(var)
     eleFr.GetYaxis().SetTitle("e Fake Rate")
     eleFr.Draw("ap")
@@ -176,7 +180,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     c1.SaveAs("ele_den_"+var+".png")
     muFr = TGraphAsymmErrors()
     muFr.BayesDivide(mnum,mden)
-    muFr.GetYaxis().SetRangeUser(0,1.0)
+    muFr.GetYaxis().SetRangeUser(0,0.5)
     muFr.GetXaxis().SetTitle(var)
     muFr.GetYaxis().SetTitle("#mu Fake Rate")
     muFr.Draw("ap")
@@ -197,10 +201,19 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
 
 def applyFakes(file,extra):
     """Apply fakerates."""
-    regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal"]
+    try:
+        file=TFile(file)
+    except TypeError:
+        pass
+        #passed open TFile, so do nothing
+    else:
+        print "This will work a bit better if you pass an open TFile!"
+
+    regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal","eeeeAA_SSFinal","eeeeAI_SSFinal","eeeeIA_SSFinal","mmmmAA_SSFinal","mmmmAI_SSFinal","mmmmIA_SSFinal","mmeeAA_SSFinal","mmeeAI_SSFinal","mmeeIA_SSFinal","eemmAA_SSFinal","eemmAI_SSFinal","eemmIA_SSFinal"]
     fakerates=measureLeptonFakes(file,extra=extra)
     BGs={}
     ns={}
+    hists={}
     for reg in regions:
         if "eeee" in reg or "mmee" in reg:
             fr=fakerates[0]
@@ -208,31 +221,70 @@ def applyFakes(file,extra):
             fr=fakerates[1]
         else:
             sysexit("Can't figure out which fakerate to use!")
-        f=TFile(file)
-        t=f.Get(reg)
+        t=file.Get(reg)
+        if t.GetEntries()==0:
+            BGs[reg]=0
+            ns[reg]=0
+            continue
         t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
         n=t.GetEntries()
         if "AA" in reg:
             expected=n*fr*fr/(1-fr)/(1-fr)
         else:
             expected=n*fr/(1-fr)
-        h=makeHist(t,"mass","",25,100,600)
-        h.Draw()
+        h=makeHist(t,"mass","",25,100,600,name="h_"+reg)
+#        h.Draw()
         BGs[reg]=expected
         ns[reg]=n
+        h.Scale(expected/h.Integral())
+        hists[reg]=h.Clone(reg)
 
-        ctemp=fit(h)
-        ctemp.SaveAs(reg+"_fit.png")
+#        ctemp=fit(h)
+#        ctemp.SaveAs(reg+"_fit.png")
     #todo: dump CR, BG plots
 
     #print out interesting stuff
+    print file.GetName()
     fakerates=measureLeptonFakes(file,extra=extra)
+#    for reg in sorted(BGs):
+#        if "SS" not in reg:
+#            regl=reg.split("F")
+#            print reg,ns[reg],';',regl[0]+"_SSFinal",ns[regl[0]+"_SSFinal"]
     for reg in sorted(BGs):
-        print reg,'--',BGs[reg],'(',ns[reg],')'
+        if "SS" not in reg:
+            print reg,'--',BGs[reg],'(',ns[reg],')'
+    for reg in sorted(BGs):
+        if "SS" in reg:
+            print reg,'--',BGs[reg],'(',ns[reg],')'
+#    print "---- Final Estimates (AI+IA-AA) ----"
+    print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
+    print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
+    print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
+    print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"],"[observed:",file.Get("eeee_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+    print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"],"[observed:",file.Get("mmmm_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+    print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"],"[observed:",file.Get("mmee_SSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+    print "eemm (SS):",BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"],"[observed:",file.Get("eemm_SSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+    #return eeee, eemm, mmmm histograms
+    return hists
+
+
+def main():
+    f1 = TFile("BG_StdIso.root")
+    f2 = TFile("Z2Jets_BGStdIso.root")
+    c = TCanvas()
+#	files=[f1,f2]
+    files = [f1]
+    hs = THStack("hs","stacked")
+    for f in files:
+        t = f.Get("eleEleMuMuEventTree_antiIso/eventTree")
+        histEEMM = makeHist(t,"z2Mass",defineCuts(common.cuts(),stdIso("z1l1",0.275,"ele",True),stdIso("z1l2",0.275,"ele",True),"!"+stdIso("z2l1",0.275,"mu"),"!"+stdIso("z2l2",0.275,"mu"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"),12,0,120)
     print "---- Final Estimates (AI+IA-AA) ----"
     print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
     print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
     print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
+    print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"]
+    print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"]
+    print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"]+BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"]
 
 
 
