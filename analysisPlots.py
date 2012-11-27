@@ -107,7 +107,7 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
     else:
         l="7"
 
-    fd=TFile("DATA_HCPLoose_BGTesting_multiCand.root")
+    fd=TFile("DATA_HCPLoose_BGtesting.root")
     d=getBGTrees(fd,BGtype)
 
     fzz=TFile("qqZZ_selected.root")
@@ -131,14 +131,15 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
         elif "eemm" in tree or "mmmm" in tree:
             fr=fakerates[1]
         else:
-            sysexit("Can't figure out which fakerate to use!")
+            print("Can't figure out which fakerate to use!")
         if "AA" in BGtype:
             FR=str(fr*fr/(1-fr)/(1-fr))
         elif "AI" in BGtype or "IA" in BGtype:
             FR=str(fr/(1-fr))
         else:
-            sysexit("Can't figure out which pass-fail region!")
+            print("Can't figure out which pass-fail region!")
         t=d[tree]
+        print tree,BGtype,t
         dh[tree]=makeHist(t,var,extra,50,100,600,False,True,bins)
         dht.Add(dh[tree])
         dhmax[tree]=dh[tree].GetMaximum()
@@ -161,6 +162,7 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
     tth={}
     for tree in tt:
         t=tt[tree]
+        print tree,BGtype,t
         tth[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__*1.0*"+lumi+"*1000)",50,100,600,False,True,bins)
         ttht.Add(tth[tree])
         tth[tree].SetFillColor(kRed+1)
@@ -479,9 +481,12 @@ if __name__ == '__main__':
     extra=options.extra
     lumi=options.lumi
 
-    makeBGPlots("AI",dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1020,20),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA",dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1020,20),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA",dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1020,20),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 
 #    makePlots(dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1010,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="_low_8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(100,184,3),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
