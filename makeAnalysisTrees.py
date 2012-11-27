@@ -18,7 +18,7 @@ if ".root" not in file:
 
 #vars to store
 vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1pfCombIso2012","z1l2pfCombIso2012","z2l1pfCombIso2012","z2l2pfCombIso2012","__WEIGHT__","__WEIGHT__noPU","z1l1pfCombIso2012_noFSR","z1l2pfCombIso2012_noFSR","z2l1pfCombIso2012_noFSR","z2l2pfCombIso2012_noFSR","weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso"]
-for thing in ["z2l1isGlobal","z2l1isTracker","z2l1isPF","z2l1mvaNonTrigPass","z2l1MissHits","z2l1mvaNonTrigPass"]:
+for thing in ["z2l1isGlobal","z2l1isTracker","z2l1isPF","z2l1mvaNonTrigPass","z2l1MissHits","z2l1mvaNonTrigPass","kd"]:
     vars4l.append(thing)
 varsZ = ["mass","l1Pt","l2Pt","l1Eta","l2Eta","l1Phi","l2Phi","RUN","LUMI","EVENT","met","l1pfCombIso2012","l2pfCombIso2012","__WEIGHT__","__WEIGHT__noPU","l1SIP","l2SIP"]
 
@@ -30,10 +30,11 @@ cuts={}
 cuts["eeee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
 cuts["mmmm"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
 cuts["mmee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0") #...this tree should have full selection applied right now
-cuts["eeee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0")
-cuts["mmmm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0")
-cuts["mmee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0") #...this tree should have full selection applied right now
-cuts["eemm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge!=0") #...this tree should have full selection applied right now
+cuts["eemm"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
+cuts["eeee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"z2Charge!=0") #don't use fourFour, since SS criteria forces failure
+cuts["mmmm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"z2Charge!=0")
+cuts["mmee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"z2Charge!=0")
+cuts["eemm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"z2Charge!=0")
 cuts["mm"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 cuts["ee"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 
@@ -121,6 +122,8 @@ mmeeTree=makeTree(mmeeEvents,"mmeeFinal")
 
 #mmee and eemm come from "ONLY" branch
 t=f.Get("muMuEleEleonlyEventTree/eventTree")
+mmeeOnlyEvents=uniquify(t,cuts["mmee"]+"&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120","bestZmass",vars4l)
+mmeeOnlyTree=makeTree(mmeeOnlyEvents,"mmee_noOL_Final")
 mmee_SSEvents=uniquify(t,cuts["mmee_SS"],"bestZmass",vars4l)
 mmee_SSTree=makeTree(mmee_SSEvents,"mmee_SSFinal")
 mmeeAAEvents=uniquify(t,cuts["mmeeAA"],"BG",vars4l)
@@ -137,6 +140,8 @@ mmeeAI_SSTree=makeTree(mmeeAI_SSEvents,"mmeeAI_SSFinal")
 mmeeIA_SSTree=makeTree(mmeeIA_SSEvents,"mmeeIA_SSFinal")
 
 t=f.Get("eleEleMuMuEventTree/eventTree")
+eemmOnlyEvents=uniquify(t,cuts["eemm"]+"&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120","bestZmass",vars4l)
+eemmOnlyTree=makeTree(eemmOnlyEvents,"eemm_noOL_Final")
 eemm_SSEvents=uniquify(t,cuts["eemm_SS"],"bestZmass",vars4l)
 eemm_SSTree=makeTree(eemm_SSEvents,"eemm_SSFinal")
 eemmAAEvents=uniquify(t,cuts["eemmAA"],"BG",vars4l)
@@ -208,6 +213,7 @@ mmmmAI_SSTree.Write()
 mmmmIA_SSTree.Write()
 
 mmeeTree.Write()
+mmeeOnlyTree.Write()
 mmee_SSTree.Write()
 mmeeAATree.Write()
 mmeeAITree.Write()
@@ -216,6 +222,7 @@ mmeeAA_SSTree.Write()
 mmeeAI_SSTree.Write()
 mmeeIA_SSTree.Write()
 
+eemmOnlyTree.Write()
 eemm_SSTree.Write()
 eemmAATree.Write()
 eemmAITree.Write()
@@ -251,4 +258,19 @@ pickle.dump(finalEvents,pout)
 pout.close()
 
 
-t
+print "mmee info"
+print "mmee:",len(mmeeOnlyEvents)
+print "eemm:",len(eemmOnlyEvents)
+print "hybrid:",len(mmeeEvents)
+mmeeSet=set(mmeeOnlyEvents.keys())
+eemmSet=set(eemmOnlyEvents.keys())
+hybridSet=set(mmeeEvents.keys())
+print "overlap:",mmeeSet.intersection(eemmSet)
+print "mmee only:",len(mmeeSet-eemmSet)
+print "eemm only:",len(eemmSet-mmeeSet)
+print "hybrid, no mmee:",len(hybridSet-mmeeSet)
+print "hybrid, no eemm:",len(hybridSet-eemmSet)
+
+
+print cuts["mmee_SS"],"mmee"
+print cuts["eemm_SS"],"eemm"
