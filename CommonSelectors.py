@@ -251,7 +251,7 @@ dZ = Selector([
 	])
 
 mmAI = Selector([
-	"z2Mass>12&&z2Mass<120",
+	"((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"z2l1SIP<4",
 	"z2l2SIP<4",
 	"z2l1Pt>5",
@@ -265,7 +265,7 @@ mmAI = Selector([
 	])
 
 mmIA = Selector([
-	"z2Mass>12&&z2Mass<120",
+	"((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"z2l1SIP<4",
 	"z2l2SIP<4",
 	"z2l1Pt>5",
@@ -279,7 +279,7 @@ mmIA = Selector([
 	])
 
 mmAA = Selector([
-	"z2Mass>12&&z2Mass<120",
+	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"z2l1SIP<4",
 	"z2l2SIP<4",
 	"z2l1Pt>5",
@@ -295,7 +295,7 @@ mmAA = Selector([
 	])
 
 eeAI = Selector([
-	"z2Mass>12&&z2Mass<120",
+	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"z2l1SIP<4",
 	"z2l2SIP<4",
 	"z2l1Pt>7",
@@ -310,7 +310,7 @@ eeAI = Selector([
 	])
 
 eeIA = Selector([
-	"z2Mass>12&&z2Mass<120",
+	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"z2l1SIP<4",
 	"z2l2SIP<4",
 	"z2l1Pt>7",
@@ -326,7 +326,7 @@ eeIA = Selector([
 	])
 
 eeAA = Selector([
-	"z2Mass>12&&z2Mass<120",
+	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"z2l1SIP<4",
 	"z2l2SIP<4",
 	"z2l1Pt>7",

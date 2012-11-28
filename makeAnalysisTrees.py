@@ -4,6 +4,9 @@ import sys
 import getopt
 from RecoLuminosity.LumiDB import argparse
 
+#todo: make this less awful. Add a skimmer class that takes cuts, vars, names, etc and has uniquify and makeTree capabilities.
+# (threading them is a good idea.)
+
 parser = argparse.ArgumentParser(description='Make cleaned up trees (one entry per event, smaller set of vars, etc...)')
 parser.add_argument('--file',type=str,required=True,default='',help='Input file')
 parser.add_argument('--out',type=str,required=True,default='',help='Output file')
@@ -43,37 +46,37 @@ cuts["eem"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),muDen.cuts())
 cuts["mme"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eleDen.cuts())
 cuts["mmm"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),muDen.cuts())
 
-cuts["eeeeAA"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
-cuts["eeeeAI"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
-cuts["eeeeIA"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0")
+cuts["eeeeAA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
+cuts["eeeeAI"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
+cuts["eeeeIA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0")
 
-cuts["mmeeAA"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
-cuts["mmeeAI"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
-cuts["mmeeIA"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0")
+cuts["mmeeAA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
+cuts["mmeeAI"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
+cuts["mmeeIA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0")
 
-cuts["eemmAA"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0")
-cuts["eemmAI"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0")
-cuts["eemmIA"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0")
+cuts["eemmAA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0")
+cuts["eemmAI"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0")
+cuts["eemmIA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0")
 
-cuts["mmmmAA"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0")
-cuts["mmmmAI"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0")
-cuts["mmmmIA"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0")
+cuts["mmmmAA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0")
+cuts["mmmmAI"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0")
+cuts["mmmmIA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0")
 
-cuts["eeeeAA_SS"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
-cuts["eeeeAI_SS"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
-cuts["eeeeIA_SS"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
+cuts["eeeeAA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
+cuts["eeeeAI_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
+cuts["eeeeIA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
 
-cuts["mmeeAA_SS"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
-cuts["mmeeAI_SS"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
-cuts["mmeeIA_SS"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
+cuts["mmeeAA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
+cuts["mmeeAI_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
+cuts["mmeeIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
 
-cuts["eemmAA_SS"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
-cuts["eemmAI_SS"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
-cuts["eemmIA_SS"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
+cuts["eemmAA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
+cuts["eemmAI_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
+cuts["eemmIA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
 
-cuts["mmmmAA_SS"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
-cuts["mmmmAI_SS"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
-cuts["mmmmIA_SS"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
+cuts["mmmmAA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
+cuts["mmmmAI_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
+cuts["mmmmIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
 
 f=TFile(file,"update")
 t=f.Get("eleEleEleEleEventTree/eventTree")
@@ -272,5 +275,5 @@ print "hybrid, no mmee:",len(hybridSet-mmeeSet)
 print "hybrid, no eemm:",len(hybridSet-eemmSet)
 
 
-print cuts["mmee_SS"],"mmee"
-print cuts["eemm_SS"],"eemm"
+print cuts["mmeeAA"],"mmee"
+print cuts["eemmAA"],"eemm"
