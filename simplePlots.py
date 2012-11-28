@@ -226,7 +226,8 @@ def applyFakes(file,extra):
             BGs[reg]=0
             ns[reg]=0
             continue
-        t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
+#        t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
+        t=t.CopyTree("mass>100&&mass<600")
         n=t.GetEntries()
         if "AA" in reg:
             expected=n*fr*fr/(1-fr)/(1-fr)
@@ -244,12 +245,12 @@ def applyFakes(file,extra):
     #todo: dump CR, BG plots
 
     #print out interesting stuff
-    print file.GetName()
     fakerates=measureLeptonFakes(file,extra=extra)
 #    for reg in sorted(BGs):
 #        if "SS" not in reg:
 #            regl=reg.split("F")
 #            print reg,ns[reg],';',regl[0]+"_SSFinal",ns[regl[0]+"_SSFinal"]
+    print file.GetName()
     for reg in sorted(BGs):
         if "SS" not in reg:
             print reg,'--',BGs[reg],'(',ns[reg],')'
