@@ -3,6 +3,7 @@ from ROOT import *
 import sys
 import getopt
 from RecoLuminosity.LumiDB import argparse
+from SkimmerClass import Skimmer
 
 #todo: make this less awful. Add a skimmer class that takes cuts, vars, names, etc and has uniquify and makeTree capabilities.
 # (threading them is a good idea.)
@@ -27,6 +28,7 @@ varsZ = ["mass","l1Pt","l2Pt","l1Eta","l2Eta","l1Phi","l2Phi","RUN","LUMI","EVEN
 
 #set selections
 cuts={}
+skimmers={}
 
 
 #NOTE: don't apply mass cuts until AFTER best Z1 selection
@@ -79,86 +81,54 @@ cuts["mmmmAI_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=
 cuts["mmmmIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
 
 f=TFile(file,"update")
-t=f.Get("eleEleEleEleEventTree/eventTree")
 
 fout=TFile(outfile,"recreate")
 
+t=f.Get("eleEleEleEleEventTree/eventTree")
 #uniquify
-eeeeEvents=uniquify(t,cuts["eeee"],"bestZmass",vars4l)
-eeee_SSEvents=uniquify(t,cuts["eeee_SS"],"bestZmass",vars4l)
-eeeeAAEvents=uniquify(t,cuts["eeeeAA"],"BG",vars4l)
-eeeeAIEvents=uniquify(t,cuts["eeeeAI"],"BG",vars4l)
-eeeeIAEvents=uniquify(t,cuts["eeeeIA"],"BG",vars4l)
-eeeeTree=makeTree(eeeeEvents,"eeeeFinal")
-eeee_SSTree=makeTree(eeee_SSEvents,"eeee_SSFinal")
-eeeeAATree=makeTree(eeeeAAEvents,"eeeeAAFinal")
-eeeeAITree=makeTree(eeeeAIEvents,"eeeeAIFinal")
-eeeeIATree=makeTree(eeeeIAEvents,"eeeeIAFinal")
-eeeeAA_SSEvents=uniquify(t,cuts["eeeeAA_SS"],"BG",vars4l)
-eeeeAI_SSEvents=uniquify(t,cuts["eeeeAI_SS"],"BG",vars4l)
-eeeeIA_SSEvents=uniquify(t,cuts["eeeeIA_SS"],"BG",vars4l)
-eeeeAA_SSTree=makeTree(eeeeAA_SSEvents,"eeeeAA_SSFinal")
-eeeeAI_SSTree=makeTree(eeeeAI_SSEvents,"eeeeAI_SSFinal")
-eeeeIA_SSTree=makeTree(eeeeIA_SSEvents,"eeeeIA_SSFinal")
+skimmers["eeee"]=Skimmer(t,cuts["eeee"],"bestZmass",vars4l,"eeeeFinal")
+skimmers["eeee_SS"]=Skimmer(t,cuts["eeee_SS"],"bestZmass",vars4l,"eeee_SSFinal")
+skimmers["eeeeAA"]=Skimmer(t,cuts["eeeeAA"],"BG",vars4l,"eeeeAAFinal")
+skimmers["eeeeAI"]=Skimmer(t,cuts["eeeeAI"],"BG",vars4l,"eeeeAIFinal")
+skimmers["eeeeIA"]=Skimmer(t,cuts["eeeeIA"],"BG",vars4l,"eeeeIAFinal")
+skimmers["eeeeAA_SS"]=Skimmer(t,cuts["eeeeAA_SS"],"BG",vars4l,"eeeeAA_SSFinal")
+skimmers["eeeeAI_SS"]=Skimmer(t,cuts["eeeeAI_SS"],"BG",vars4l,"eeeeAI_SSFinal")
+skimmers["eeeeIA_SS"]=Skimmer(t,cuts["eeeeIA_SS"],"BG",vars4l,"eeeeIA_SSFinal")
 
 t=f.Get("muMuMuMuEventTree/eventTree")
-mmmmEvents=uniquify(t,cuts["mmmm"],"bestZmass",vars4l)
-mmmm_SSEvents=uniquify(t,cuts["mmmm_SS"],"bestZmass",vars4l)
-mmmmAAEvents=uniquify(t,cuts["mmmmAA"],"BG",vars4l)
-mmmmAIEvents=uniquify(t,cuts["mmmmAI"],"BG",vars4l)
-mmmmIAEvents=uniquify(t,cuts["mmmmIA"],"BG",vars4l)
-mmmmTree=makeTree(mmmmEvents,"mmmmFinal")
-mmmm_SSTree=makeTree(mmmm_SSEvents,"mmmm_SSFinal")
-mmmmAATree=makeTree(mmmmAAEvents,"mmmmAAFinal")
-mmmmAITree=makeTree(mmmmAIEvents,"mmmmAIFinal")
-mmmmIATree=makeTree(mmmmIAEvents,"mmmmIAFinal")
-mmmmAA_SSEvents=uniquify(t,cuts["mmmmAA_SS"],"BG",vars4l)
-mmmmAI_SSEvents=uniquify(t,cuts["mmmmAI_SS"],"BG",vars4l)
-mmmmIA_SSEvents=uniquify(t,cuts["mmmmIA_SS"],"BG",vars4l)
-mmmmAA_SSTree=makeTree(mmmmAA_SSEvents,"mmmmAA_SSFinal")
-mmmmAI_SSTree=makeTree(mmmmAI_SSEvents,"mmmmAI_SSFinal")
-mmmmIA_SSTree=makeTree(mmmmIA_SSEvents,"mmmmIA_SSFinal")
+skimmers["mmmm"]=Skimmer(t,cuts["mmmm"],"bestZmass",vars4l,"mmmmFinal")
+skimmers["mmmm_SS"]=Skimmer(t,cuts["mmmm_SS"],"bestZmass",vars4l,"mmmm_SSFinal")
+skimmers["mmmmAA"]=Skimmer(t,cuts["mmmmAA"],"BG",vars4l,"mmmmAAFinal")
+skimmers["mmmmAI"]=Skimmer(t,cuts["mmmmAI"],"BG",vars4l,"mmmmAIFinal")
+skimmers["mmmmIA"]=Skimmer(t,cuts["mmmmIA"],"BG",vars4l,"mmmmIAFinal")
+skimmers["mmmmAA_SS"]=Skimmer(t,cuts["mmmmAA_SS"],"BG",vars4l,"mmmmAA_SSFinal")
+skimmers["mmmmAI_SS"]=Skimmer(t,cuts["mmmmAI_SS"],"BG",vars4l,"mmmmAI_SSFinal")
+skimmers["mmmmIA_SS"]=Skimmer(t,cuts["mmmmIA_SS"],"BG",vars4l,"mmmmIA_SSFinal")
 
 t=f.Get("muMuEleEleEventTree/eventTree")
-mmeeEvents=uniquify(t,cuts["mmee"],"bestZmass",vars4l)
-mmeeTree=makeTree(mmeeEvents,"mmeeFinal")
+skimmers["mmee"]=Skimmer(t,cuts["mmee"],"bestZmass",vars4l,"mmeeFinal")
 
 #mmee and eemm come from "ONLY" branch
 t=f.Get("muMuEleEleonlyEventTree/eventTree")
-mmeeOnlyEvents=uniquify(t,cuts["mmee"]+"&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120","bestZmass",vars4l)
-mmeeOnlyTree=makeTree(mmeeOnlyEvents,"mmee_noOL_Final")
-mmee_SSEvents=uniquify(t,cuts["mmee_SS"],"bestZmass",vars4l)
-mmee_SSTree=makeTree(mmee_SSEvents,"mmee_SSFinal")
-mmeeAAEvents=uniquify(t,cuts["mmeeAA"],"BG",vars4l)
-mmeeAIEvents=uniquify(t,cuts["mmeeAI"],"BG",vars4l)
-mmeeIAEvents=uniquify(t,cuts["mmeeIA"],"BG",vars4l)
-mmeeAATree=makeTree(mmeeAAEvents,"mmeeAAFinal")
-mmeeAITree=makeTree(mmeeAIEvents,"mmeeAIFinal")
-mmeeIATree=makeTree(mmeeIAEvents,"mmeeIAFinal")
-mmeeAA_SSEvents=uniquify(t,cuts["mmeeAA_SS"],"BG",vars4l)
-mmeeAI_SSEvents=uniquify(t,cuts["mmeeAI_SS"],"BG",vars4l)
-mmeeIA_SSEvents=uniquify(t,cuts["mmeeIA_SS"],"BG",vars4l)
-mmeeAA_SSTree=makeTree(mmeeAA_SSEvents,"mmeeAA_SSFinal")
-mmeeAI_SSTree=makeTree(mmeeAI_SSEvents,"mmeeAI_SSFinal")
-mmeeIA_SSTree=makeTree(mmeeIA_SSEvents,"mmeeIA_SSFinal")
+skimmers["mmee_o"]=Skimmer(t,cuts["mmee"],"bestZmass",vars4l,"mmee_oFinal")
+skimmers["mmee_o_SS"]=Skimmer(t,cuts["mmee_SS"],"bestZmass",vars4l,"mmee_oSSFinal")
+skimmers["mmee_oAA"]=Skimmer(t,cuts["mmeeAA"],"BG",vars4l,"mmeeAAFinal")
+skimmers["mmee_oAI"]=Skimmer(t,cuts["mmeeAI"],"BG",vars4l,"mmeeAIFinal")
+skimmers["mmee_oIA"]=Skimmer(t,cuts["mmeeIA"],"BG",vars4l,"mmeeIAFinal")
+skimmers["mmee_oAA_SS"]=Skimmer(t,cuts["mmeeAA_SS"],"BG",vars4l,"mmeeAA_SSFinal")
+skimmers["mmee_oAI_SS"]=Skimmer(t,cuts["mmeeAI_SS"],"BG",vars4l,"mmeeAI_SSFinal")
+skimmers["mmee_oIA_SS"]=Skimmer(t,cuts["mmeeIA_SS"],"BG",vars4l,"mmeeIA_SSFinal")
+
 
 t=f.Get("eleEleMuMuEventTree/eventTree")
-eemmOnlyEvents=uniquify(t,cuts["eemm"]+"&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120","bestZmass",vars4l)
-eemmOnlyTree=makeTree(eemmOnlyEvents,"eemm_noOL_Final")
-eemm_SSEvents=uniquify(t,cuts["eemm_SS"],"bestZmass",vars4l)
-eemm_SSTree=makeTree(eemm_SSEvents,"eemm_SSFinal")
-eemmAAEvents=uniquify(t,cuts["eemmAA"],"BG",vars4l)
-eemmAIEvents=uniquify(t,cuts["eemmAI"],"BG",vars4l)
-eemmIAEvents=uniquify(t,cuts["eemmIA"],"BG",vars4l)
-eemmAATree=makeTree(eemmAAEvents,"eemmAAFinal")
-eemmAITree=makeTree(eemmAIEvents,"eemmAIFinal")
-eemmIATree=makeTree(eemmIAEvents,"eemmIAFinal")
-eemmAA_SSEvents=uniquify(t,cuts["eemmAA_SS"],"BG",vars4l)
-eemmAI_SSEvents=uniquify(t,cuts["eemmAI_SS"],"BG",vars4l)
-eemmIA_SSEvents=uniquify(t,cuts["eemmIA_SS"],"BG",vars4l)
-eemmAA_SSTree=makeTree(eemmAA_SSEvents,"eemmAA_SSFinal")
-eemmAI_SSTree=makeTree(eemmAI_SSEvents,"eemmAI_SSFinal")
-eemmIA_SSTree=makeTree(eemmIA_SSEvents,"eemmIA_SSFinal")
+skimmers["eemm_o"]=Skimmer(t,cuts["eemm"],"bestZmass",vars4l,"eemm_oFinal")
+skimmers["eemm_o_SS"]=Skimmer(t,cuts["eemm_SS"],"bestZmass",vars4l,"eemm_oSSFinal")
+skimmers["eemm_oAA"]=Skimmer(t,cuts["eemmAA"],"BG",vars4l,"eemmAAFinal")
+skimmers["eemm_oAI"]=Skimmer(t,cuts["eemmAI"],"BG",vars4l,"eemmAIFinal")
+skimmers["eemm_oIA"]=Skimmer(t,cuts["eemmIA"],"BG",vars4l,"eemmIAFinal")
+skimmers["eemm_oAA_SS"]=Skimmer(t,cuts["eemmAA_SS"],"BG",vars4l,"eemmAA_SSFinal")
+skimmers["eemm_oAI_SS"]=Skimmer(t,cuts["eemmAI_SS"],"BG",vars4l,"eemmAI_SSFinal")
+skimmers["eemm_oIA_SS"]=Skimmer(t,cuts["eemmIA_SS"],"BG",vars4l,"eemmIA_SSFinal")
 
 #temp.. don't do these because they take so damn long
 #t=f.Get("muMuEventTree/eventTree")
@@ -173,67 +143,21 @@ eemmIA_SSTree=makeTree(eemmIA_SSEvents,"eemmIA_SSFinal")
 #eeEvents.clear()
 
 t=f.Get("muMuEleEventTree/eventTree")
-mmeEvents=uniquify(t,cuts["mme"],"dummy",vars4l,True) #use 4l vars for now
-mmeTree=makeTree(mmeEvents,"mmeFinal")
-mmeTree.Write()
-mmeEvents.clear()
+skimmers["mme"]=Skimmer(t,cuts["mme"],"dummy",vars4l,"mmeFinal",True)
 
 t=f.Get("muMuMuEventTree/eventTree")
-mmmEvents=uniquify(t,cuts["mmm"],"dummy",vars4l,True) #use 4l vars for now
-mmmTree=makeTree(mmmEvents,"mmmFinal")
-mmmTree.Write()
-mmmEvents.clear()
+skimmers["mmm"]=Skimmer(t,cuts["mmm"],"dummy",vars4l,"mmmFinal",True)
 
 t=f.Get("eleEleEleEventTree/eventTree")
-eeeEvents=uniquify(t,cuts["eee"],"dummy",vars4l,True) #use 4l vars for now
-eeeTree=makeTree(eeeEvents,"eeeFinal")
-eeeTree.Write()
-eeeEvents.clear()
+skimmers["eee"]=Skimmer(t,cuts["eee"],"dummy",vars4l,"eeeFinal",True)
 
 t=f.Get("eleEleMuEventTree/eventTree")
-eemEvents=uniquify(t,cuts["eem"],"dummy",vars4l,True) #use 4l vars for now
-eemTree=makeTree(eemEvents,"eemFinal")
-eemTree.Write()
-eemEvents.clear()
+skimmers["eem"]=Skimmer(t,cuts["eem"],"dummy",vars4l,"eemFinal",True)
 
-#write trees
-eeeeTree.Write()
-eeee_SSTree.Write()
-eeeeAATree.Write()
-eeeeAITree.Write()
-eeeeIATree.Write()
-eeeeAA_SSTree.Write()
-eeeeAI_SSTree.Write()
-eeeeIA_SSTree.Write()
-
-mmmmTree.Write()
-mmmm_SSTree.Write()
-mmmmAATree.Write()
-mmmmAITree.Write()
-mmmmIATree.Write()
-mmmmAA_SSTree.Write()
-mmmmAI_SSTree.Write()
-mmmmIA_SSTree.Write()
-
-mmeeTree.Write()
-mmeeOnlyTree.Write()
-mmee_SSTree.Write()
-mmeeAATree.Write()
-mmeeAITree.Write()
-mmeeIATree.Write()
-mmeeAA_SSTree.Write()
-mmeeAI_SSTree.Write()
-mmeeIA_SSTree.Write()
-
-eemmOnlyTree.Write()
-eemm_SSTree.Write()
-eemmAATree.Write()
-eemmAITree.Write()
-eemmIATree.Write()
-eemmAA_SSTree.Write()
-eemmAI_SSTree.Write()
-eemmIA_SSTree.Write()
-
+for i in skimmers:
+    skimmers[i].setEvents()
+    skimmers[i].makeTree().Write()
+#    skimmers[i].clear()
 
 f.Close()
 fout.Close()
@@ -244,36 +168,34 @@ llllTree=TChain("llllTree")
 llllTree.Add(outfile+"/eeeeFinal")
 llllTree.Add(outfile+"/mmeeFinal")
 llllTree.Add(outfile+"/mmmmFinal")
-print llllTree.GetEntries()
 llllTreeFinal=llllTree.CloneTree()
 llllTreeFinal.SetName("llllTree")
 llllTreeFinal.Write()
 fout2.Close()
 
 #dump them for quick event checks.
-import pickle
-pout=open('myEvents.pck','w')
-finalEvents={}
-finalEvents['eeee']=eeeeEvents
-finalEvents['mmmm']=mmmmEvents
-finalEvents['mmee']=mmeeEvents
-pickle.dump(finalEvents,pout)
-pout.close()
+#import pickle
+#pout=open('myEvents.pck','w')
+#finalEvents={}
+#finalEvents['eeee']=eeeeEvents
+#finalEvents['mmmm']=mmmmEvents
+#finalEvents['mmee']=mmeeEvents
+#pickle.dump(finalEvents,pout)
+#pout.close()
 
-
-print "mmee info"
-print "mmee:",len(mmeeOnlyEvents)
-print "eemm:",len(eemmOnlyEvents)
-print "hybrid:",len(mmeeEvents)
-mmeeSet=set(mmeeOnlyEvents.keys())
-eemmSet=set(eemmOnlyEvents.keys())
-hybridSet=set(mmeeEvents.keys())
-print "overlap:",mmeeSet.intersection(eemmSet)
-print "mmee only:",len(mmeeSet-eemmSet)
-print "eemm only:",len(eemmSet-mmeeSet)
-print "hybrid, no mmee:",len(hybridSet-mmeeSet)
-print "hybrid, no eemm:",len(hybridSet-eemmSet)
-
-
-print cuts["mmeeAA"],"mmee"
-print cuts["eemmAA"],"eemm"
+#print "mmee info"
+#print "mmee:",len(mmeeOnlyEvents)
+#print "eemm:",len(eemmOnlyEvents)
+#print "hybrid:",len(mmeeEvents)
+#mmeeSet=set(mmeeOnlyEvents.keys())
+#eemmSet=set(eemmOnlyEvents.keys())
+#hybridSet=set(mmeeEvents.keys())
+#print "overlap:",mmeeSet.intersection(eemmSet)
+#print "mmee only:",len(mmeeSet-eemmSet)
+#print "eemm only:",len(eemmSet-mmeeSet)
+#print "hybrid, no mmee:",len(hybridSet-mmeeSet)
+#print "hybrid, no eemm:",len(hybridSet-eemmSet)
+#
+#
+#print cuts["mmeeAA"],"mmee"
+#print cuts["eemmAA"],"eemm"
