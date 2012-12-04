@@ -171,6 +171,15 @@ llllTree.Add(outfile+"/mmmmFinal")
 llllTreeFinal=llllTree.CloneTree()
 llllTreeFinal.SetName("llllTree")
 llllTreeFinal.Write()
+
+#make mmee+eemm tree
+for type in ["AAFinal","AIFinal","IAFinal","AA_SSFinal","AI_SSFinal","IA_SSFinal"]:
+    mmeeSumTree=TChain("mmeeSumTree"+type)
+    mmeeSumTree.Add(outfile+"/mmee"+type)
+    mmeeSumTree.Add(outfile+"/eemm"+type)
+    mmeeSumTreeFinal = mmeeSumTree.CloneTree()
+    mmeeSumTreeFinal.SetName("mmeeSum"+type)
+    mmeeSumTreeFinal.Write()
 fout2.Close()
 
 #dump them for quick event checks.
