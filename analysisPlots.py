@@ -107,7 +107,7 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
     else:
         l="7"
 
-    fd=TFile("DATA_HCPLoose_BGtesting.root")
+    fd=TFile("/scratch/iross/DATA_HCPLoose29Nov_sel.root")
     d=getBGTrees(fd,BGtype)
 
     fzz=TFile("qqZZ_selected.root")
@@ -481,12 +481,26 @@ if __name__ == '__main__':
     extra=options.extra
     lumi=options.lumi
 
-    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1050,50),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+
+    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+
+    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 
 #    makePlots(dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1010,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="_low_8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(100,184,3),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
