@@ -135,7 +135,7 @@ def fit(hist):
     print "Expected in on-shell region:",expected
     return c1
 
-def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[0,1]):
+def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[0,1], varNice="P_{T}"):
     logging.debug('Measuring fakes from file:%s',file)
     try:
         print "This will work a bit better if you pass an open TFile!"
@@ -167,7 +167,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     eleFr = TGraphAsymmErrors()
     eleFr.BayesDivide(enum,eden)
     eleFr.GetYaxis().SetRangeUser(0,0.5)
-    eleFr.GetXaxis().SetTitle(var)
+    eleFr.GetXaxis().SetTitle(varNice)
     eleFr.GetYaxis().SetTitle("e Fake Rate")
     eleFr.Draw("ap")
     c1.SaveAs("ele_FR_"+var+".C")
@@ -197,7 +197,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",enum.Integral()/eden.Integral(),"=",enum.Integral(),"/",eden.Integral()
     print "--Muons--"
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
-    return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral()]
+    return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
 def applyFakes(file,extra,lowZ1=True):
     """Apply fakerates."""
