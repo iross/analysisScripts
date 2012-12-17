@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
-ROOT.gROOT.SetBatch(True)
+#ROOT.gROOT.SetBatch(True)
 
 def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1], name="temp"):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
@@ -232,14 +232,16 @@ def applyFakes(file,extra,lowZ1=True):
             t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
         n=t.GetEntries()
         if "AA" in reg:
-            expected=n*fr*fr/(1-fr)/(1-fr)
+            scale=fr*fr/(1-fr)/(1-fr)
+            expected=n*scale
         else:
-            expected=n*fr/(1-fr)
-        h=makeHist(t,"mass","",25,100,600,name="h_"+reg)
+            scale=fr/(1-fr)
+            expected=n*scale
+        h=makeHist(t,"mass","",50,100,600,name="h_"+reg)
 #        h.Draw()
         BGs[reg]=expected
         ns[reg]=n
-        h.Scale(expected/h.Integral())
+        h.Scale(scale)
         hists[reg]=h.Clone(reg)
 
 #        ctemp=fit(h)
