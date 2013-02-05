@@ -16,9 +16,7 @@ def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=Fa
     if customBinning:
         h = TH1F(name,name,len(bins)-1,array('d',bins))
     if overflow:
-        #		print "\twas",hist.GetBinContent(nbin)
         hist.SetBinContent(nbin,hist.GetBinContent(nbin)+hist.GetBinContent(nbin+1))
-#		print "\tnow",hist.GetBinContent(nbin)
     tree.Draw(var+">>"+name,cuts,"goff")
     return h
 
@@ -138,8 +136,8 @@ def fit(hist):
 def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[0,1], varNice="P_{T}"):
     logging.debug('Measuring fakes from file:%s',file)
     try:
-        print "This will work a bit better if you pass an open TFile!"
         file = TFile(file)
+        print "This will work a bit better if you pass an open TFile!"
     except TypeError:
         pass
     if customBinning:
@@ -199,15 +197,14 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
-def applyFakes(file,extra,lowZ1=True):
+def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1]):
+    # todo: pass custom histogram options for fake rates
     """Apply fakerates."""
     try:
         file=TFile(file)
+        print "This will work a bit better if you pass an open TFile!"
     except TypeError:
         pass
-        #passed open TFile, so do nothing
-    else:
-        print "This will work a bit better if you pass an open TFile!"
 
     regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal","eeeeAA_SSFinal","eeeeAI_SSFinal","eeeeIA_SSFinal","mmmmAA_SSFinal","mmmmAI_SSFinal","mmmmIA_SSFinal","mmeeAA_SSFinal","mmeeAI_SSFinal","mmeeIA_SSFinal","eemmAA_SSFinal","eemmAI_SSFinal","eemmIA_SSFinal"]
     fakerates=measureLeptonFakes(file,extra=extra)
@@ -237,7 +234,7 @@ def applyFakes(file,extra,lowZ1=True):
         else:
             scale=fr/(1-fr)
             expected=n*scale
-        h=makeHist(t,"mass","",50,100,600,name="h_"+reg)
+        h=makeHist(t,"mass","",50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg)
 #        h.Draw()
         BGs[reg]=expected
         ns[reg]=n
