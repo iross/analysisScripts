@@ -197,7 +197,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
-def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1]):
+def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1],quiet=False):
     # todo: pass custom histogram options for fake rates
     """Apply fakerates."""
     try:
@@ -225,8 +225,10 @@ def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1]):
             continue
         if lowZ1:
             t=t.CopyTree("mass>100&&mass<600")
+#            t=t.CopyTree("mass>100&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         else:
             t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
+#            t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         n=t.GetEntries()
         if "AA" in reg:
             scale=fr*fr/(1-fr)/(1-fr)
@@ -235,38 +237,32 @@ def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1]):
             scale=fr/(1-fr)
             expected=n*scale
         h=makeHist(t,"mass","",50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg)
-#        h.Draw()
+        h.Sumw2()
         BGs[reg]=expected
         ns[reg]=n
         h.Scale(scale)
         hists[reg]=h.Clone(reg)
 
-#        ctemp=fit(h)
-#        ctemp.SaveAs(reg+"_fit.png")
-    #todo: dump CR, BG plots
-
     #print out interesting stuff
-    fakerates=measureLeptonFakes(file,extra=extra)
-#    for reg in sorted(BGs):
-#        if "SS" not in reg:
-#            regl=reg.split("F")
-#            print reg,ns[reg],';',regl[0]+"_SSFinal",ns[regl[0]+"_SSFinal"]
-    print(file.GetName()+" ('real' Z extended to 12-40: "+str(lowZ1)+")")
-    for reg in sorted(BGs):
-        if "SS" not in reg:
-            print reg,'--',BGs[reg],'(',ns[reg],')'
-    for reg in sorted(BGs):
-        if "SS" in reg:
-            print reg,'--',BGs[reg],'(',ns[reg],')'
-#    print "---- Final Estimates (AI+IA-AA) ----"
-    print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
-    print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
-    print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
-    print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"],"[observed:",file.Get("eeee_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-    print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"],"[observed:",file.Get("mmmm_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-    print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"],"[observed:",file.Get("mmee_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-    print "eemm (SS):",BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"],"[observed:",file.Get("eemm_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-    #return eeee, eemm, mmmm histograms
+#    fakerates=measureLeptonFakes(file,extra=extra)
+
+    if not quiet:
+        print(file.GetName()+" ('real' Z extended to 12-40: "+str(lowZ1)+")")
+        for reg in sorted(BGs):
+            if "SS" not in reg:
+                print reg,'--',BGs[reg],'(',ns[reg],')'
+        for reg in sorted(BGs):
+            if "SS" in reg:
+                print reg,'--',BGs[reg],'(',ns[reg],')'
+    #    print "---- Final Estimates (AI+IA-AA) ----"
+        print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
+        print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
+        print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
+        print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"],"[observed:",file.Get("eeee_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+        print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"],"[observed:",file.Get("mmmm_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+        print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"],"[observed:",file.Get("mmee_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+        print "eemm (SS):",BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"],"[observed:",file.Get("eemm_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+
     return hists
 
 
