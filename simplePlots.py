@@ -285,6 +285,81 @@ def main():
     print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"]+BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"]
 
 
+def addText(string,x1,y1,x2,y2):
+    """ Return stylized string for stickin' on plots"""
+    pav=TPaveText(x1,y1,x2,y2)
+    pav.AddText(string)
+    pav.SetFillColor(kWhite)
+    pav.SetBorderSize(1)
+    return pav
+
+def makeBGhist(f,state,customBinning,bins):
+    """Write the scaled background hists to the TFile on a common canvas"""
+    """Also returns the final BG histogram"""
+
+    hists=applyFakes(f,extra="&&z1Mass>81&&z1Mass<101",lowZ1=True,customBinning=customBinning,bins=bins)
+    # if mmee, add eemm
+    ROOT.gROOT.ProcessLine(".X CMSStyle.C")
+    c1=TCanvas()
+    c1.Divide(2,2)
+    c1.SetTitle(state+"_canvas")
+    c1.SetName(state+"_canvas")
+
+    if state=="eemm" or state=="mmee": #add together Zee_real+Zmm_fake and Zmm_real+Zee_fake contributions
+        stateBG=hists['mmeeAIFinal'].Clone()
+        stateBG.Add(hists['mmeeIAFinal'])
+        stateBG.Add(hists['eemmAIFinal'])
+        stateBG.Add(hists['eemmIAFinal'])
+        stateBG.Add(hists['mmeeAAFinal'],-1)
+        stateBG.Add(hists['eemmAAFinal'],-1)
+        c1.cd(1)
+        hists['mmeeIAFinal'].Draw('e')
+        temp2=addText('mmeeIAFinal',350,0.75*hists['mmeeIAFinal'].GetMaximum(),525,0.90*hists['mmeeIAFinal'].GetMaximum())
+        temp2.Draw()
+        c1.cd(2)
+        hists['mmeeAIFinal'].Draw('e')
+        temp3=addText('mmeeAIFinal',350,0.75*hists['mmeeAIFinal'].GetMaximum(),525,0.90*hists['mmeeAIFinal'].GetMaximum())
+        temp3.Draw()
+        c1.cd(3)
+        hists['mmeeAAFinal'].Draw('e')
+        temp4=addText('mmeeAAFinal',350,0.75*hists['mmeeAAFinal'].GetMaximum(),525,0.90*hists['mmeeAAFinal'].GetMaximum())
+        temp4.Draw()
+        c1.cd(4)
+        stateBG.Draw('e')
+        temp=addText('mmeeFinal',350,0.75*stateBG.GetMaximum(),525,0.90*stateBG.GetMaximum())
+        temp.Draw()
+        c1.Write()
+    else:
+        stateBG=hists[state+'AIFinal'].Clone()
+        stateBG.Add(hists[state+'IAFinal'])
+        stateBG.Add(hists[state+'AAFinal'],-1)
+        c1.cd(1)
+        hists[state+'IAFinal'].Draw('e')
+        temp2=addText(state+'IAFinal',350,0.75*hists[state+'IAFinal'].GetMaximum(),525,0.90*hists[state+'IAFinal'].GetMaximum())
+        temp2.Draw()
+        c1.cd(2)
+        hists[state+'AIFinal'].Draw('e')
+        temp3=addText(state+'AIFinal',350,0.75*hists[state+'AIFinal'].GetMaximum(),525,0.90*hists[state+'AIFinal'].GetMaximum())
+        temp3.Draw()
+        c1.cd(3)
+        hists[state+'AAFinal'].Draw('e')
+        temp4=addText(state+'AAFinal',350,0.75*hists[state+'AAFinal'].GetMaximum(),525,0.90*hists[state+'AAFinal'].GetMaximum())
+        temp4.Draw()
+        c1.cd(4)
+        stateBG.Draw('e')
+        temp=addText(state+'Final',350,0.75*stateBG.GetMaximum(),525,0.90*stateBG.GetMaximum())
+        temp.Draw()
+        c1.Write()
+
+    print hists[state+'AIFinal'].Integral(),"+",hists[state+'IAFinal'].Integral(),"-",hists[state+'AAFinal'].Integral()
+    print stateBG.Integral()
+    c2=TCanvas()
+    stateBG.Draw()
+    stateBG.SetTitle(state+"BG")
+    stateBG.SetName(state+"BG")
+#    stateBG.Write()
+    return stateBG
+
 
 def main():
     f1 = TFile("BG_StdIso.root")
