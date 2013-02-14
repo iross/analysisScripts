@@ -1,7 +1,7 @@
-
 from ROOT import *
 from simplePlots import *
 import math
+import re
 import os
 from optparse import OptionParser
 
@@ -163,7 +163,7 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
     for tree in tt:
         t=tt[tree]
         print tree,BGtype,t
-        tth[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__*1.0*"+lumi+"*1000)",50,100,600,False,True,bins)
+        tth[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__noPU*1.0*"+lumi+"*1000)",50,100,600,False,True,bins)
         ttht.Add(tth[tree])
         tth[tree].SetFillColor(kRed+1)
         tth[tree].SetMarkerSize(0.001)
@@ -172,6 +172,7 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
     zjht=TH1F("zjh","zjh",len(bins)-1,array('d',bins))
     zjh={}
     for tree in zj:
+        print "------------",tree,"-------------"
         t=zj[tree]
         zjh[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__*1.0*"+lumi+"*1000)",50,100,600,False,True,bins)
         zjht.Add(zjh[tree])
@@ -273,7 +274,7 @@ def makeBGPlots(BGtype="AA",dir="2012",postfix="8TeV",lumi="2.95",extra="1",var=
     f.close()
 
 def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNice="Z_{M}^{1}",bins=range(60,120,5),legx=0.2,legW=0.3,legy=0.3,legH=0.3,log=False):
-    fd=TFile("DATA_fullHcp_lite.root")
+    fd=TFile("DATA_2012_fullmass.root")
     d=getTrees(fd,"")
 
     eventDump(d["eeee"],extra)
@@ -286,7 +287,8 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
     else:
         l="7"
 
-    fzz=TFile("qqZZ_lite.root")
+    fzz=TFile("ZZ4L_selected_fullmass.root")
+
     zz=getTrees(fzz,"")
 
     fzj=TFile("DYJets_lite.root")
@@ -296,9 +298,6 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
 #    fh=TFile("ggH125_lite_2.root")
 #    ht=getTrees(fh,"")
 
-    can = TCanvas("can","can",600,600)
-
-    leg=TLegend(legx,legy,legx+legW,legy+legH)
 
     dht=TH1F("dh","dh",len(bins)-1,array('d',bins))
     dh={}
@@ -307,7 +306,6 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
         dh[tree]=makeHist(t,var,extra,50,100,600,False,True,bins)
         dht.Add(dh[tree])
     dh["4l"]=poisson.convert(dht,False,-1000)
-    print dht.GetMaximum(),"SHOULD BE YMAX"
 
     zzht=TH1F("zzh","zzh",len(bins)-1,array('d',bins))
     zzh={}
@@ -315,7 +313,7 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
         t=zz[tree]
 #        zzh[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__noPU*__CORRnoHLT__*149/139*"+lumi+"*1000)",50,100,600,False,True,bins)
 #        zzh[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__noPU*149/139*1.06*"+lumi+"*1000)",50,100,600,False,True,bins)
-        zzh[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__noPU*1.06*"+lumi+"*1000)",50,100,600,False,True,bins)
+        zzh[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__*1.06*"+lumi+"*1000)",50,100,600,False,True,bins)
     #   zzh[tree]=makeHist(t,var,"1*"+lumi+"*1000",50,100,600,False,True,bins)
         zzht.Add(zzh[tree])
         zzh[tree].SetFillColor(kAzure-9)
@@ -337,32 +335,32 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
 #    print zzh["4l"].Integral()
 #    print '---------'
 
-    hht=TH1F("hh","hh",len(bins)-1,array('d',bins))
-    hh={}
-    for tree in ht:
-        t=ht[tree]
-        hh[tree]=makeHist(t,var,"("+extra+")*(weight*"+lumi+"*1000)",50,100,600,False,True,bins)
-    #   zzh[tree]=makeHist(t,var,"1*"+lumi+"*1000",50,100,600,False,True,bins)
-        hht.Add(hh[tree])
-        hh[tree].SetFillColor(kWhite)
-        hh[tree].SetLineColor(kRed)
-        hh[tree].SetLineWidth(2)
-        hh[tree].SetMarkerSize(0.001)
-    hh["4l"]=hht
+#    hht=TH1F("hh","hh",len(bins)-1,array('d',bins))
+#    hh={}
+#    for tree in ht:
+#        t=ht[tree]
+#        hh[tree]=makeHist(t,var,"("+extra+")*(weight*"+lumi+"*1000)",50,100,600,False,True,bins)
+#    #   zzh[tree]=makeHist(t,var,"1*"+lumi+"*1000",50,100,600,False,True,bins)
+#        hht.Add(hh[tree])
+#        hh[tree].SetFillColor(kWhite)
+#        hh[tree].SetLineColor(kRed)
+#        hh[tree].SetLineWidth(2)
+#        hh[tree].SetMarkerSize(0.001)
+#    hh["4l"]=hht
 
     zjht=TH1F("zjh","zjh",len(bins)-1,array('d',bins))
     zjh={}
     for tree in zj:
-        t=zj[tree]
-        ##temp
-        t=fd.Get("eeeeAAFinal")
-        zjh[tree]=makeHist(t,var,"("+extra+")",50,100,600,False,True,bins)
-        if tree is "eeee":
-            zjh[tree].Scale(0.000781733566027)
-        elif tree is "eemm":
-            zjh[tree].Scale(0.00182164048866)
-        elif tree is "mmmm":
-            zjh[tree].Scale(0.000998080279232)
+        zjh[tree]=makeBGhist(fd,tree,var,True,bins)
+        ##temp use AA for shape
+#        t=fd.Get("eeeeAAFinal")
+#        zjh[tree]=makeHist(t,var,"("+extra+")",50,100,600,False,True,bins)
+#        if tree is "eeee":
+#            zjh[tree].Scale(0.000781733566027)
+#        elif tree is "eemm":
+#            zjh[tree].Scale(0.00182164048866)
+#        elif tree is "mmmm":
+#            zjh[tree].Scale(0.000998080279232)
         ##temp
 #        zjh[tree]=makeHist(t,var,"("+extra+")*(__WEIGHT__noPU*"+lumi+"*1000)",50,100,600,False,True,bins)
         zjh[tree].SetFillColor(kGreen-5)
@@ -377,25 +375,32 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
     #colors, etc.
     zzht.SetMarkerSize(0.001)
     zzht.SetFillColor(kAzure-9)
-    hht.SetMarkerSize(0.001)
-    hht.SetFillColor(kWhite)
-    hht.SetLineColor(kRed)
-    hht.SetLineWidth(2)
+#    hht.SetMarkerSize(0.001)
+#    hht.SetFillColor(kWhite)
+#    hht.SetLineColor(kRed)
+#    hht.SetLineWidth(2)
     zjht.SetMarkerSize(0.001)
     zjht.SetFillColor(kGreen-5)
 #    zzaht.SetMarkerSize(0.001)
+
+    f=open(dir+"/yields.txt","w")
+    fd.cd()
+    fd.ls()
+    can = TCanvas("can","can",600,600)
+
+    leg=TLegend(legx,legy,legx+legW,legy+legH)
 
     #legend
     leg.SetFillColor(kWhite)
     leg.AddEntry(dht,"Data","p")
     leg.AddEntry(zzht,"ZZ","f")
     leg.AddEntry(zjht,"Z+X","f")
-    leg.AddEntry(hht,"h125","f")
+#    leg.AddEntry(hht,"h125","f")
 #    leg.AddEntry(zzaht,"f_{4}^{Z}=0.015","l")
 #    leg.AddEntry(zzaht,"SHERPA","l")
     leg.SetBorderSize(1)
 
-    f=open(dir+"/yields.txt","w")
+
     for state in dh:
         f.write("---"+state+"---\n")
         if state is "4l":
@@ -409,7 +414,7 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
         hs=THStack("hs","stack bg")
         hs.Add(zjh[state])
         hs.Add(zzh[state])
-        hs.Add(hh[state])
+#        hs.Add(hh[state])
         print state,zzh[state].Integral()
         ymax=max(dh[state].GetMaximum(),hs.GetMaximum())
         if state is "4l":
@@ -448,7 +453,7 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
         dh[state].SetMarkerStyle(20)
         dh[state].SetMarkerSize(1)
 
-        hs.Draw("hsame")
+        hs.Draw("HIST SAME")
 #        hsa.Draw("hsame")
         dh[state].Draw("psame")
         leg.Draw()
@@ -456,6 +461,9 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
         l2.Draw();
         if log:
             can.SetLogy(1)
+
+        # strip special chars out of variable name for easier saving
+        var=re.sub('[/,.\{\}()+]','',var)
 
         if str(bins[0]-bins[1]) == str(bins[len(bins)-2]-bins[len(bins)-1]): # if spaced evenly
             can.SaveAs(dir+"/"+state+"/"+state+"_"+var+""+postfix+".png")
@@ -481,33 +489,33 @@ if __name__ == '__main__':
     extra=options.extra
     lumi=options.lumi
 
-    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,610,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 
-    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass",varNice="M_{real} (GeV)",bins=range(0,130,5),legx=0.3,legW=0.3,legy=0.7,legH=0.2,log=False)
-
-    makeBGPlots("AI",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AI_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("IA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-    makeBGPlots("AA_SS",dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z2Mass",varNice="M_{fake} (GeV)",bins=range(0,130,5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-
-#    makePlots(dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1010,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="_low_8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(100,184,3),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="_low_fine_8TeV",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=np.arange(100,151,1.5),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
-#    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass*(abs(z1Mass-91.2)<abs(z2Mass-91.2))+z2Mass*(abs(z2Mass-91.2)<abs(z1Mass-91.2))",varNice="M_{Z1}",bins=range(20,125,5),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="8TeV_signal",lumi=lumi,extra=extra+"&&mass>121.5&&mass<131.5",var="z1Mass*(abs(z1Mass-91.2)<abs(z2Mass-91.2))+z2Mass*(abs(z2Mass-91.2)<abs(z1Mass-91.2))",varNice="M_{Z1}",bins=range(20,124,4),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass*(abs(z1Mass-91.2)<abs(z2Mass-91.2))+z2Mass*(abs(z2Mass-91.2)<abs(z1Mass-91.2))",varNice="M_{Z1}",bins=range(20,125,5),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1Mass*(abs(z1Mass-91.2)>abs(z2Mass-91.2))+z2Mass*(abs(z2Mass-91.2)>abs(z1Mass-91.2))",varNice="M_{Z2}",bins=range(0,125,5),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="pt/(z1Pt+z2Pt)",varNice="\\frac{ZZ_{P_{T}}}{Z^{1}_{P_{T}}+Z^{2}_{P_{T}}}",bins=np.arange(0,1,0.02),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="pt",varNice="P_{T}^{ZZ}",bins=range(0,50,1),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
+#    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="vertices",varNice="vertices",bins=range(0,50,1),legx=0.2,legW=0.3,legy=0.7,legH=0.2,log=False)
+    makePlots(dir="2012",postfix="8TeV_10wide",lumi=lumi,extra=extra,var="mass",varNice="M_{llll} (GeV)",bins=range(80,1010,10),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="8TeV_signal",lumi=lumi,extra=extra+"&&mass>121.5&&mass<131.5",var="z1Mass*(abs(z1Mass-91.2)>abs(z2Mass-91.2))+z2Mass*(abs(z2Mass-91.2)>abs(z1Mass-91.2))",varNice="M_{Z2}",bins=range(0,84,4),legx=0.6,legW=0.3,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1l1Pt",varNice="z1l1Pt",bins=range(0,105,5),legx=0.7,legW=0.2,legy=0.7,legH=0.2,log=False)
 #    makePlots(dir="2012",postfix="8TeV",lumi=lumi,extra=extra,var="z1l2Pt",varNice="z1l2Pt",bins=range(0,105,5),legx=0.7,legW=0.2,legy=0.7,legH=0.2,log=False)
