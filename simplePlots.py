@@ -197,7 +197,9 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
-def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1],quiet=False):
+def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],quiet=False):
+    #todo: do this for any variable
+
     # todo: pass custom histogram options for fake rates
     """Apply fakerates."""
     try:
@@ -236,7 +238,7 @@ def applyFakes(file,extra,lowZ1=True,customBinning=False,bins=[0,1],quiet=False)
         else:
             scale=fr/(1-fr)
             expected=n*scale
-        h=makeHist(t,"mass","",50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg)
+        h=makeHist(t,var,"",50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg)
         h.Sumw2()
         BGs[reg]=expected
         ns[reg]=n
@@ -293,11 +295,12 @@ def addText(string,x1,y1,x2,y2):
     pav.SetBorderSize(1)
     return pav
 
-def makeBGhist(f,state,customBinning,bins):
+def makeBGhist(f,state,var,customBinning,bins):
     """Write the scaled background hists to the TFile on a common canvas"""
     """Also returns the final BG histogram"""
 
-    hists=applyFakes(f,extra="&&z1Mass>81&&z1Mass<101",lowZ1=True,customBinning=customBinning,bins=bins)
+    #todo: any var...
+    hists=applyFakes(f,extra="&&z1Mass>81&&z1Mass<101",var=var,lowZ1=True,customBinning=customBinning,bins=bins)
     # if mmee, add eemm
     ROOT.gROOT.ProcessLine(".X CMSStyle.C")
     c1=TCanvas()
