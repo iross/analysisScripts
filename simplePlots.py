@@ -152,7 +152,11 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
         mden = TH1F("mden","mden",12,0,120)
     #todo: re-implement the nElectron/nMuon vetos
     enum.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
+    print  "num:"
+    print defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleNum.cuts())+extra
     eden.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
+    print  "den:"
+    print defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleDen.cuts())+extra
     enum.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
     eden.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
 
@@ -198,9 +202,6 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
 def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],quiet=False):
-    #todo: do this for any variable
-
-    # todo: pass custom histogram options for fake rates
     """Apply fakerates."""
     try:
         file=TFile(file)
@@ -299,7 +300,6 @@ def makeBGhist(f,state,var,customBinning,bins):
     """Write the scaled background hists to the TFile on a common canvas"""
     """Also returns the final BG histogram"""
 
-    #todo: any var...
     hists=applyFakes(f,extra="&&z1Mass>81&&z1Mass<101",var=var,lowZ1=True,customBinning=customBinning,bins=bins)
     # if mmee, add eemm
     ROOT.gROOT.ProcessLine(".X CMSStyle.C")
