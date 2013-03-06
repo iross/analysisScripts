@@ -4,9 +4,12 @@ import sys
 import getopt
 from RecoLuminosity.LumiDB import argparse
 from SkimmerClass import Skimmer
+from simplePlots import *
 
-#todo: make this less awful. Add a skimmer class that takes cuts, vars, names, etc and has uniquify and makeTree capabilities.
-# (threading them is a good idea.)
+#todo: threading?
+
+def cmssw_major_version():
+    return int(os.getenv('CMSSW_VERSION').split('_')[1])
 
 parser = argparse.ArgumentParser(description='Make cleaned up trees (one entry per event, smaller set of vars, etc...)')
 parser.add_argument('--file',type=str,required=True,default='',help='Input file')
@@ -20,16 +23,20 @@ outfile=args.out
 if ".root" not in file:
     file=file+".root"
 
+if cmssw_major_version==4: #2011, use the pfCombIso with the 2011 rho values
+    iso="pfCombIso"
+else:
+    iso="pfCombIso2012"
+
 #vars to store
-vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1pfCombIso2012","z1l2pfCombIso2012","z2l1pfCombIso2012","z2l2pfCombIso2012","__WEIGHT__","__WEIGHT__noPU","z1l1pfCombIso2012_noFSR","z1l2pfCombIso2012_noFSR","z2l1pfCombIso2012_noFSR","z2l2pfCombIso2012_noFSR","weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso"]
+vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"__WEIGHT__","__WEIGHT__noPU","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso","pt","z1Pt","z2Pt"]
 for thing in ["z2l1isGlobal","z2l1isTracker","z2l1isPF","z2l1mvaNonTrigPass","z2l1MissHits","z2l1mvaNonTrigPass","kd"]:
     vars4l.append(thing)
-varsZ = ["mass","l1Pt","l2Pt","l1Eta","l2Eta","l1Phi","l2Phi","RUN","LUMI","EVENT","met","l1pfCombIso2012","l2pfCombIso2012","__WEIGHT__","__WEIGHT__noPU","l1SIP","l2SIP"]
+varsZ = ["mass","l1Pt","l2Pt","l1Eta","l2Eta","l1Phi","l2Phi","RUN","LUMI","EVENT","met","l1"+iso,"l2"+iso,"__WEIGHT__","__WEIGHT__noPU","l1SIP","l2SIP"]
 
 #set selections
 cuts={}
 skimmers={}
-
 
 #NOTE: don't apply mass cuts until AFTER best Z1 selection
 cuts["eeee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
@@ -43,10 +50,10 @@ cuts["eemm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"z2Charg
 cuts["mm"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 cuts["ee"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 
-cuts["eee"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleDen.cuts())
-cuts["eem"]=defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),muDen.cuts())
-cuts["mme"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eleDen.cuts())
-cuts["mmm"]=defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),muDen.cuts())
+cuts["eee"]=defineCuts(common.cuts(),z1ee.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",eleDen.cuts()) #temp... Z+l branch doesn't have the FSRed iso, so use noFSR iso
+cuts["eem"]=defineCuts(common.cuts(),z1ee.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",muDen.cuts())
+cuts["mme"]=defineCuts(common.cuts(),z1mm.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",eleDen.cuts())
+cuts["mmm"]=defineCuts(common.cuts(),z1mm.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",muDen.cuts())
 
 cuts["eeeeAA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
 cuts["eeeeAI"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
@@ -83,8 +90,10 @@ cuts["mmmmIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=
 f=TFile(file,"update")
 
 fout=TFile(outfile,"recreate")
+fout.Close() #temp
 
 t=f.Get("eleEleEleEleEventTree/eventTree")
+print t
 #uniquify
 skimmers["eeee"]=Skimmer(t,cuts["eeee"],"bestZmass",vars4l,"eeeeFinal")
 skimmers["eeee_SS"]=Skimmer(t,cuts["eeee_SS"],"bestZmass",vars4l,"eeee_SSFinal")
@@ -129,6 +138,8 @@ skimmers["eemm_oIA"]=Skimmer(t,cuts["eemmIA"],"BG",vars4l,"eemmIAFinal")
 skimmers["eemm_oAA_SS"]=Skimmer(t,cuts["eemmAA_SS"],"BG",vars4l,"eemmAA_SSFinal")
 skimmers["eemm_oAI_SS"]=Skimmer(t,cuts["eemmAI_SS"],"BG",vars4l,"eemmAI_SSFinal")
 skimmers["eemm_oIA_SS"]=Skimmer(t,cuts["eemmIA_SS"],"BG",vars4l,"eemmIA_SSFinal")
+#
+##temp
 
 #temp.. don't do these because they take so damn long
 #t=f.Get("muMuEventTree/eventTree")
@@ -155,12 +166,13 @@ t=f.Get("eleEleMuEventTree/eventTree")
 skimmers["eem"]=Skimmer(t,cuts["eem"],"dummy",vars4l,"eemFinal",True)
 
 for i in skimmers:
+    fout=TFile(outfile,"update") #open/close this every time for memory relief?
     skimmers[i].setEvents()
     skimmers[i].makeTree().Write()
-#    skimmers[i].clear()
+    skimmers[i].clear()
+    fout.Close()
 
 f.Close()
-fout.Close()
 
 #make total 4l tree
 fout2=TFile(outfile,"UPDATE")
@@ -169,8 +181,11 @@ llllTree.Add(outfile+"/eeeeFinal")
 llllTree.Add(outfile+"/mmeeFinal")
 llllTree.Add(outfile+"/mmmmFinal")
 llllTreeFinal=llllTree.CloneTree()
-llllTreeFinal.SetName("llllTree")
-llllTreeFinal.Write()
+try:
+    llllTreeFinal.SetName("llllTree")
+    llllTreeFinal.Write()
+except ReferenceError:
+    print "No events in llllTree!"
 
 #make mmee+eemm tree
 for type in ["AAFinal","AIFinal","IAFinal","AA_SSFinal","AI_SSFinal","IA_SSFinal"]:
@@ -178,11 +193,14 @@ for type in ["AAFinal","AIFinal","IAFinal","AA_SSFinal","AI_SSFinal","IA_SSFinal
     mmeeSumTree.Add(outfile+"/mmee"+type)
     mmeeSumTree.Add(outfile+"/eemm"+type)
     mmeeSumTreeFinal = mmeeSumTree.CloneTree()
-    mmeeSumTreeFinal.SetName("mmeeSum"+type)
-    mmeeSumTreeFinal.Write()
+    try:
+        mmeeSumTreeFinal.SetName("mmeeSum"+type)
+        mmeeSumTreeFinal.Write()
+    except ReferenceError:
+        print "No events in the combined eemm+mmee tree!"
 fout2.Close()
 
-#dump them for quick event checks.
+#dump events for quick checks.
 #import pickle
 #pout=open('myEvents.pck','w')
 #finalEvents={}
@@ -191,20 +209,3 @@ fout2.Close()
 #finalEvents['mmee']=mmeeEvents
 #pickle.dump(finalEvents,pout)
 #pout.close()
-
-#print "mmee info"
-#print "mmee:",len(mmeeOnlyEvents)
-#print "eemm:",len(eemmOnlyEvents)
-#print "hybrid:",len(mmeeEvents)
-#mmeeSet=set(mmeeOnlyEvents.keys())
-#eemmSet=set(eemmOnlyEvents.keys())
-#hybridSet=set(mmeeEvents.keys())
-#print "overlap:",mmeeSet.intersection(eemmSet)
-#print "mmee only:",len(mmeeSet-eemmSet)
-#print "eemm only:",len(eemmSet-mmeeSet)
-#print "hybrid, no mmee:",len(hybridSet-mmeeSet)
-#print "hybrid, no eemm:",len(hybridSet-eemmSet)
-#
-#
-#print cuts["mmeeAA"],"mmee"
-#print cuts["eemmAA"],"eemm"
