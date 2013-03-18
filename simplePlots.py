@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
-#ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.SetBatch(True)
 
 def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1], name="temp"):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
@@ -151,19 +151,19 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
         mnum = TH1F("mnum","mnum",12,0,120)
         mden = TH1F("mden","mden",12,0,120)
     #todo: re-implement the nElectron/nMuon vetos
-    enum.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
+    enum.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
     print  "num:"
-    print defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleNum.cuts())+extra
-    eden.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
+    print defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleNum.cuts())+extra
+    eden.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
     print  "den:"
-    print defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),eleDen.cuts())+extra
-    enum.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
-    eden.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
+    print defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleDen.cuts())+extra
+    enum.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIsoNoFSR.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
+    eden.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIsoNoFSR.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
 
-    mnum.Add(makeHist(file.Get("eemFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),muNum.cuts())+extra,12,0,120,False,customBinning,bins))
-    mden.Add(makeHist(file.Get("eemFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIso.cuts(),muDen.cuts())+extra,12,0,120,False,customBinning,bins))
-    mnum.Add(makeHist(file.Get("mmmFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),muNum.cuts())+extra,12,0,120,False,customBinning,bins))
-    mden.Add(makeHist(file.Get("mmmFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIso.cuts(),muDen.cuts())+extra,12,0,120,False,customBinning,bins))
+    mnum.Add(makeHist(file.Get("eemFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),muNum.cuts())+extra,12,0,120,False,customBinning,bins))
+    mden.Add(makeHist(file.Get("eemFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),muDen.cuts())+extra,12,0,120,False,customBinning,bins))
+    mnum.Add(makeHist(file.Get("mmmFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIsoNoFSR.cuts(),muNum.cuts())+extra,12,0,120,False,customBinning,bins))
+    mden.Add(makeHist(file.Get("mmmFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIsoNoFSR.cuts(),muDen.cuts())+extra,12,0,120,False,customBinning,bins))
 
     c1=TCanvas("can","can",600,600)
     eleFr = TGraphAsymmErrors()
@@ -227,7 +227,7 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
             ns[reg]=0
             continue
         if lowZ1:
-            t=t.CopyTree("mass>100&&mass<600")
+            t=t.CopyTree("mass>100&&mass<600&&((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<40&&z2Mass>40&&z2Mass<120))")
 #            t=t.CopyTree("mass>100&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         else:
             t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
@@ -247,7 +247,7 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
         hists[reg]=h.Clone(reg)
 
     #print out interesting stuff
-#    fakerates=measureLeptonFakes(file,extra=extra)
+    fakerates=measureLeptonFakes(file,extra=extra)
 
     if not quiet:
         print(file.GetName()+" ('real' Z extended to 12-40: "+str(lowZ1)+")")

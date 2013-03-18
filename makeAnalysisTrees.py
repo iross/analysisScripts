@@ -39,18 +39,18 @@ cuts={}
 skimmers={}
 
 #NOTE: don't apply mass cuts until AFTER best Z1 selection
-cuts["eeee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
-cuts["mmmm"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
-cuts["mmee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0") #...this tree should have full selection applied right now
-cuts["eemm"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")
-cuts["eeee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"z2Charge!=0") #don't use fourFour, since SS criteria forces failure
-cuts["mmmm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"z2Charge!=0")
-cuts["mmee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"z2Charge!=0")
-cuts["eemm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2RelPFIso.cuts(),"z2Charge!=0")
+cuts["eeee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2relIso.cuts(),"fourFour","z2Charge==0")
+cuts["mmmm"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2relIso.cuts(),"fourFour","z2Charge==0")
+cuts["mmee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2relIso.cuts(),"fourFour","z2Charge==0") #...this tree should have full selection applied right now
+cuts["eemm"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2relIso.cuts(),"fourFour","z2Charge==0")
+cuts["eeee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2relIso.cuts(),"z2Charge!=0") #don't use fourFour, since SS criteria forces failure
+cuts["mmmm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2relIso.cuts(),"z2Charge!=0")
+cuts["mmee_SS"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2relIso.cuts(),"z2Charge!=0")
+cuts["eemm_SS"]=defineCuts(pt20_10.cuts(),z2mm.cuts(),z2relIso.cuts(),"z2Charge!=0")
 cuts["mm"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 cuts["ee"]=defineCuts("l1Pt>20&&l2Pt>10") #all cuts applied before trees filled
 
-cuts["eee"]=defineCuts(common.cuts(),z1ee.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",eleDen.cuts()) #temp... Z+l branch doesn't have the FSRed iso, so use noFSR iso
+cuts["eee"]=defineCuts(common.cuts(),z1ee.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",eleDen.cuts())
 cuts["eem"]=defineCuts(common.cuts(),z1ee.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",muDen.cuts())
 cuts["mme"]=defineCuts(common.cuts(),z1mm.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",eleDen.cuts())
 cuts["mmm"]=defineCuts(common.cuts(),z1mm.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",muDen.cuts())
@@ -87,7 +87,7 @@ cuts["mmmmAA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=
 cuts["mmmmAI_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
 cuts["mmmmIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
 
-f=TFile(file,"update")
+f=TFile(file,"read")
 
 fout=TFile(outfile,"recreate")
 fout.Close() #temp
@@ -138,8 +138,6 @@ skimmers["eemm_oIA"]=Skimmer(t,cuts["eemmIA"],"BG",vars4l,"eemmIAFinal")
 skimmers["eemm_oAA_SS"]=Skimmer(t,cuts["eemmAA_SS"],"BG",vars4l,"eemmAA_SSFinal")
 skimmers["eemm_oAI_SS"]=Skimmer(t,cuts["eemmAI_SS"],"BG",vars4l,"eemmAI_SSFinal")
 skimmers["eemm_oIA_SS"]=Skimmer(t,cuts["eemmIA_SS"],"BG",vars4l,"eemmIA_SSFinal")
-#
-##temp
 
 #temp.. don't do these because they take so damn long
 #t=f.Get("muMuEventTree/eventTree")

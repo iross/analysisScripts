@@ -26,7 +26,3 @@ class Skimmer(object):
     def clear(self):
         """Clear out event dict"""
         self.events={}
-
-#f=TFile(file,"update")
-#t=f.Get("eleEleEleEleEventTree/eventTree")
-#cuts["eeee"]=defineCuts(pt20_10.cuts(),z2ee.cuts(),z2RelPFIso.cuts(),"fourFour","z2Charge==0")

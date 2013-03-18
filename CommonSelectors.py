@@ -31,8 +31,8 @@ def stdIso(leg, cut, lep, wcut=True):
 common = Selector([
 #	"HLT_Any",
 	"z1Charge==0",
-	"z1Mass>40",
-	"z1Mass<120",
+#	"z1Mass>40",
+#	"z1Mass<120",
 #    "z2Mass>60",
 #    "z2Mass<120",
 #    "(mass<110 || mass >140) && mass < 300",
@@ -71,7 +71,17 @@ z1mm = Selector([
 	])
 
 z1relIso = Selector([
-    "z1l1pfCombIso2012_noFSR<0.40", #temp should be with FSR
+    "z1l1pfCombIso2012<0.40",
+    "z1l2pfCombIso2012<0.40",
+    ])
+
+z2relIso = Selector([
+    "z2l1pfCombIso2012<0.40",
+    "z2l2pfCombIso2012<0.40",
+    ])
+
+z1relIsoNoFSR = Selector([ #for use in FR measurements
+    "z1l1pfCombIso2012_noFSR<0.40",
     "z1l2pfCombIso2012_noFSR<0.40",
     ])
 
@@ -153,16 +163,6 @@ z2em = Selector([
 	"z2Mass<90"
 ])
 
-z1RelPFIso = Selector([
-	"z1l1pfCombIso2012_noFSR<0.40",
-	"z1l2pfCombIso2012_noFSR<0.40"
-	])
-
-z2RelPFIso = Selector([
-	"z2l1pfCombIso2012_noFSR<0.40",
-	"z2l2pfCombIso2012_noFSR<0.40"
-	])
-
 z1StdIsoee = Selector([
 	stdIso("z1l1",0.275,"ele",True),
 	stdIso("z1l2",0.275,"ele",True)
@@ -171,11 +171,6 @@ z1StdIsoee = Selector([
 z1StdIsomm = Selector([
 	stdIso("z1l1",0.275,"mu",True),
 	stdIso("z1l2",0.275,"mu",True)
-	])
-
-z2RelPFIso = Selector([
-	"z2l1pfCombIso2012_noFSR<0.40",
-	"z2l2pfCombIso2012_noFSR<0.40"
 	])
 
 z2StdIsoee = Selector([
@@ -289,10 +284,10 @@ mmAI = Selector([
     "abs(z2l2dz)<1.0",
 	"abs(z2l1Eta)<2.5",
 	"abs(z2l2Eta)<2.5",
-	"((!z2l1isPF) || !(z2l1pfCombIso2012_noFSR<0.40))",
+	"((!z2l1isPF) || !(z2l1pfCombIso2012<0.40))",
     "(z2l1isTracker||z2l1isGlobal)", #'loose' req.
 	"(z2l2isTracker||z2l2isGlobal)&&z2l2isPF",
-	"z2l2pfCombIso2012_noFSR<0.40"
+	"z2l2pfCombIso2012<0.40"
 	])
 
 mmIA = Selector([
@@ -308,9 +303,9 @@ mmIA = Selector([
 	"abs(z2l1Eta)<2.5",
 	"abs(z2l2Eta)<2.5",
     "(z2l2isTracker||z2l2isGlobal)",
-	"((!z2l2isPF) || !(z2l2pfCombIso2012_noFSR<0.40))",
+	"((!z2l2isPF) || !(z2l2pfCombIso2012<0.40))",
 	"(z2l1isTracker||z2l1isGlobal)&&z2l1isPF",
-	"z2l1pfCombIso2012_noFSR<0.40"
+	"z2l1pfCombIso2012<0.40"
 	])
 
 mmAA = Selector([
@@ -329,8 +324,8 @@ mmAA = Selector([
     "(z2l1isGlobal||z2l1isTracker)",
     "(z2l2isGlobal||z2l2isTracker)",
 
-	"((!z2l1isPF) || !(z2l1pfCombIso2012_noFSR<0.40))",
-	"((!z2l2isPF) || !(z2l2pfCombIso2012_noFSR<0.40))",
+	"((!z2l1isPF) || !(z2l1pfCombIso2012<0.40))",
+	"((!z2l2isPF) || !(z2l2pfCombIso2012<0.40))",
 	])
 
 eeAI = Selector([
@@ -348,9 +343,9 @@ eeAI = Selector([
     "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
     "z2l1MissHits<2",
     "z2l1MissHits<2",
-	"((!(z2l1mvaNonTrigPass>0)) || !(z2l1pfCombIso2012_noFSR<0.40))",
+	"((!(z2l1mvaNonTrigPass>0)) || !(z2l1pfCombIso2012<0.40))",
 	"z2l2mvaNonTrigPass>0",
-	"z2l2pfCombIso2012_noFSR<0.40"
+	"z2l2pfCombIso2012<0.40"
 	])
 
 eeIA = Selector([
@@ -368,10 +363,10 @@ eeIA = Selector([
 	"abs(z2l2Eta)<2.5",
     "z2l1MissHits<2",
     "z2l2MissHits<2",
-	"((!(z2l2mvaNonTrigPass>0)) || !(z2l2pfCombIso2012_noFSR<0.40))",
+	"((!(z2l2mvaNonTrigPass>0)) || !(z2l2pfCombIso2012<0.40))",
 
 	"z2l1mvaNonTrigPass>0",
-	"z2l1pfCombIso2012_noFSR<0.40"
+	"z2l1pfCombIso2012<0.40"
 	])
 
 eeAA = Selector([
@@ -389,7 +384,7 @@ eeAA = Selector([
 	"abs(z2l2Eta)<2.5",
     "z2l1MissHits<2",
     "z2l2MissHits<2",
-	"((!(z2l1mvaNonTrigPass>0)) || !(z2l1pfCombIso2012_noFSR<0.40))",
-	"((!(z2l2mvaNonTrigPass>0)) || !(z2l2pfCombIso2012_noFSR<0.40))",
+	"((!(z2l1mvaNonTrigPass>0)) || !(z2l1pfCombIso2012<0.40))",
+	"((!(z2l2mvaNonTrigPass>0)) || !(z2l2pfCombIso2012<0.40))",
 	])
 

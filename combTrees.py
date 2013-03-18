@@ -197,21 +197,21 @@ def getCuts(tree):
     """Return cutstring for given tree name."""
     #2l2t
     if tree.find("eleEleTauTau") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1RelPFIso.cuts(),z2tt.cuts())
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1relIso.cuts(),z2tt.cuts())
     if tree.find("muMuTauTau") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1RelPFIso.cuts(),z2tt.cuts())
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1relIso.cuts(),z2tt.cuts())
     if tree.find("eleEleEleTau") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1RelPFIso.cuts(),z2et.cuts(),"EVENT!=344708580")
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1relIso.cuts(),z2et.cuts(),"EVENT!=344708580")
     if tree.find("muMuEleTau") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1RelPFIso.cuts(),z2et.cuts(),"EVENT!=286336207")
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1relIso.cuts(),z2et.cuts(),"EVENT!=286336207")
     if tree.find("eleEleMuTau") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1RelPFIso.cuts(),z2mt.cuts())
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1relIso.cuts(),z2mt.cuts())
     if tree.find("muMuMuTau") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1RelPFIso.cuts(),z2mt.cuts())
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1relIso.cuts(),z2mt.cuts())
     if tree.find("eleEleEleMu") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1RelPFIso.cuts(),z2RelPFIso.cuts(),z2em.cuts())
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1ee.cuts(),z1relIso.cuts(),z2relIso.cuts(),z2em.cuts())
     if tree.find("muMuEleMu") != -1:
-        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1RelPFIso.cuts(),z2RelPFIso.cuts(),z2em.cuts())
+        cuts=defineCuts(common.cuts(),dZ.cuts(),z1mm.cuts(),z1relIso.cuts(),z2relIso.cuts(),z2em.cuts())
     #4l
     if tree.find("eleEleEleEle") != -1:
         cuts=defineCuts(common.cuts(),z1sip.cuts(),z2sip.cuts(),z1ee.cuts(),z1StdIsoee.cuts(),z2StdIsoee.cuts(),z2ee.cuts())
