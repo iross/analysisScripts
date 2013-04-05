@@ -32,11 +32,21 @@ def arbitrate(event1,event2, method=''):
     if method is 'dummy' :
         return [ event1 ]
     if method is 'BG':
+        # Keep track of which candidate is the 'best' (maximizing sumPt of Z2 leptons?)
+        sumPtMax = event1['z2l1Pt']+event1['z2l2Pt']
         if abs(event1['z1Mass']-91.2)<abs(event2['z1Mass']-91.2):
+            event1['bestBGcand'] = 1
             return [ event1 ]
         elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2) and event1['z2l1Pt']!=event2['z2l1Pt'] and event1['z2l2Pt']!=event2['z2l2Pt']: #same Z1 but not same fakes.. return both
+            if event2['z2l1Pt']+event2['z2l2Pt'] > sumPtMax:
+                event2['bestBGcand'] = 1
+                event1['bestBGcand'] = 0
+            else:
+                event2['bestBGcand'] = 0
+                event1['bestBGcand'] = 1
             return [ event1, event2 ]
         else: #event 2 has better Z OR combination is the same
+            event2['bestBGcand'] = 1
             return [ event2 ]
 
 #    if method=='bestZ1':
@@ -74,6 +84,8 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
                 except ReferenceError:
 #                    print "Couldn't get variable!",var,"does not exist."
                     continue
+            if arbMode is "BG":
+                myDic['bestBGcand'] = 1
             events[eventID]=myDic
         else:
             tempEvent={}
@@ -85,9 +97,9 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
             if arbMode is "BG":
                 neweventID=str(event.EVENT/event.z2l1Phi/event.z2l2Phi) #want the combinations to be unique, not the events todo: pick Z1 first?
                 arbResult=arbitrate(events[eventID],tempEvent,method=arbMode)
-                if len(arbResult)>1:
+                if len(arbResult)>1: #same Z1 candidate, so add this combination to the good events
                     events[neweventID]=arbResult[1]
-                else:
+                else: #keep the better Z1 candidate
                     events[eventID]=arbitrate(events[eventID],tempEvent,method=arbMode)[0]
             else:
                 arbResult=arbitrate(events[eventID],tempEvent,method=arbMode)
@@ -101,12 +113,13 @@ def makeTree(events,name):
     """Takes dict of events, returns a new tree with appropriate variables"""
     n={}
     newTree=TTree(name,name)
-    newTree.SetAutoSave(3000000000) #set autosave to 3 GB
+    newTree.SetAutoSave(3000000000)
     try:
-        for var in events[events.keys()[0]]: #ugh.
+        for var in sorted(events[events.keys()[0]]): #ugh.
             n[var]=N.zeros(1,dtype=float)
             newTree.Branch(var,n[var],var+'/d')
     except IndexError:
+        print ":("
         return newTree
     for i in events:
         for var in events[i].keys():
