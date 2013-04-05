@@ -342,7 +342,7 @@ eeAI = Selector([
 	"abs(z2l2Eta)<2.5",
     "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
     "z2l1MissHits<2",
-    "z2l1MissHits<2",
+    "z2l2MissHits<2",
 	"((!(z2l1mvaNonTrigPass>0)) || !(z2l1pfCombIso2012<0.40))",
 	"z2l2mvaNonTrigPass>0",
 	"z2l2pfCombIso2012<0.40"
