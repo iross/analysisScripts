@@ -275,7 +275,6 @@ dz = Selector([
 	])
 
 mmAI = Selector([
-	"((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"abs(z2l1SIP)<4",
 	"abs(z2l2SIP)<4",
     "abs(z2l1dXY)<0.5",
@@ -291,7 +290,6 @@ mmAI = Selector([
 	])
 
 mmIA = Selector([
-	"((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"abs(z2l1SIP)<4",
 	"abs(z2l2SIP)<4",
     "abs(z2l1dXY)<0.5",
@@ -309,7 +307,6 @@ mmIA = Selector([
 	])
 
 mmAA = Selector([
-	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"abs(z2l1SIP)<4",
 	"abs(z2l2SIP)<4",
     "abs(z2l1dXY)<0.5",
@@ -329,7 +326,6 @@ mmAA = Selector([
 	])
 
 eeAI = Selector([
-	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"abs(z2l1SIP)<4",
 	"abs(z2l2SIP)<4",
     "abs(z2l1dXY)<0.5",
@@ -349,7 +345,6 @@ eeAI = Selector([
 	])
 
 eeIA = Selector([
-	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"abs(z2l1SIP)<4",
 	"abs(z2l2SIP)<4",
     "abs(z2l1dXY)<0.5",
@@ -364,13 +359,11 @@ eeIA = Selector([
     "z2l1MissHits<2",
     "z2l2MissHits<2",
 	"((!(z2l2mvaNonTrigPass>0)) || !(z2l2pfCombIso2012<0.40))",
-
 	"z2l1mvaNonTrigPass>0",
 	"z2l1pfCombIso2012<0.40"
 	])
 
 eeAA = Selector([
-	"((z1Mass>40&&z2Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<120&&z2Mass>40&&z2Mass<120))",
 	"abs(z2l1SIP)<4",
 	"abs(z2l2SIP)<4",
     "abs(z2l1dXY)<0.5",
