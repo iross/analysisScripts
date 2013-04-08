@@ -313,7 +313,6 @@ mmAA = Selector([
 	"z2l2Pt>5",
 	"abs(z2l1Eta)<2.4",
 	"abs(z2l2Eta)<2.4",
-    "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
     "(z2l1isGlobal||z2l1isTracker)",
     "(z2l2isGlobal||z2l2isTracker)",
 
@@ -332,7 +331,6 @@ eeAI = Selector([
 	"z2l2Pt>7",
 	"abs(z2l1Eta)<2.5",
 	"abs(z2l2Eta)<2.5",
-    "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
     "z2l1MissHits<2",
     "z2l2MissHits<2",
 	"((!(z2l1mvaNonTrigPass>0)) || !(z2l1pfCombIso2012<0.40))",
@@ -349,7 +347,6 @@ eeIA = Selector([
     "abs(z2l2dz)<1.0",
 	"z2l1Pt>7",
 	"z2l2Pt>7",
-    "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
 	"abs(z2l1Eta)<2.5",
 	"abs(z2l2Eta)<2.5",
     "z2l1MissHits<2",
@@ -368,7 +365,6 @@ eeAA = Selector([
     "abs(z2l2dz)<1.0",
 	"z2l1Pt>7",
 	"z2l2Pt>7",
-    "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
 	"abs(z2l1Eta)<2.5",
 	"abs(z2l2Eta)<2.5",
     "z2l1MissHits<2",
