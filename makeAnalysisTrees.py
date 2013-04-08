@@ -29,7 +29,7 @@ else:
     iso="pfCombIso2012"
 
 #vars to store
-vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"__WEIGHT__","__WEIGHT__noPU","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso","pt","z1Pt","z2Pt"]
+vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"__WEIGHT__","__WEIGHT__noPU","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso","pt","z1Pt","z2Pt","nElectrons","nMuons"]
 for thing in ["z2l1isGlobal","z2l1isTracker","z2l1isPF","z2l1mvaNonTrigPass","z2l1MissHits","z2l1mvaNonTrigPass","kd"]:
     vars4l.append(thing)
 varsZ = ["mass","l1Pt","l2Pt","l1Eta","l2Eta","l1Phi","l2Phi","RUN","LUMI","EVENT","met","l1"+iso,"l2"+iso,"__WEIGHT__","__WEIGHT__noPU","l1SIP","l2SIP"]
@@ -55,37 +55,37 @@ cuts["eem"]=defineCuts(common.cuts(),z1ee.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<
 cuts["mme"]=defineCuts(common.cuts(),z1mm.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",eleDen.cuts())
 cuts["mmm"]=defineCuts(common.cuts(),z1mm.cuts(),"z1l1"+iso+"<0.40&&z1l2"+iso+"<0.40",muDen.cuts())
 
-cuts["eeeeAA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
-cuts["eeeeAI"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
-cuts["eeeeIA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0")
+cuts["eeeeAA"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0","fourFour")
+cuts["eeeeAI"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0","fourFour")
+cuts["eeeeIA"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0","fourFour")
 
-cuts["mmeeAA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0")
-cuts["mmeeAI"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0")
-cuts["mmeeIA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0")
+cuts["mmeeAA"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge==0","fourFour")
+cuts["mmeeAI"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge==0","fourFour")
+cuts["mmeeIA"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge==0","fourFour")
 
-cuts["eemmAA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0")
-cuts["eemmAI"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0")
-cuts["eemmIA"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0")
+cuts["eemmAA"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0","fourFour")
+cuts["eemmAI"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0","fourFour")
+cuts["eemmIA"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0","fourFour")
 
-cuts["mmmmAA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0")
-cuts["mmmmAI"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0")
-cuts["mmmmIA"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0")
+cuts["mmmmAA"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge==0","fourFour")
+cuts["mmmmAI"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge==0","fourFour")
+cuts["mmmmIA"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge==0","fourFour")
 
-cuts["eeeeAA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
-cuts["eeeeAI_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
-cuts["eeeeIA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
+cuts["eeeeAA_SS"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
+cuts["eeeeAI_SS"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
+cuts["eeeeIA_SS"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
 
-cuts["mmeeAA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
-cuts["mmeeAI_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
-cuts["mmeeIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
+cuts["mmeeAA_SS"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAA.cuts(),"z2Charge!=0")
+cuts["mmeeAI_SS"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeAI.cuts(),"z2Charge!=0")
+cuts["mmeeIA_SS"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),eeIA.cuts(),"z2Charge!=0")
 
-cuts["eemmAA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
-cuts["eemmAI_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
-cuts["eemmIA_SS"]=defineCuts(z1ee.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
+cuts["eemmAA_SS"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
+cuts["eemmAI_SS"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
+cuts["eemmIA_SS"]=defineCuts(z1ee.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
 
-cuts["mmmmAA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
-cuts["mmmmAI_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
-cuts["mmmmIA_SS"]=defineCuts(z1mm.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
+cuts["mmmmAA_SS"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAA.cuts(),"z2Charge!=0")
+cuts["mmmmAI_SS"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmAI.cuts(),"z2Charge!=0")
+cuts["mmmmIA_SS"]=defineCuts(z1mm.cuts(),pt20_10.cuts(),z1relIso.cuts(),mmIA.cuts(),"z2Charge!=0")
 
 f=TFile(file,"read")
 
@@ -97,9 +97,9 @@ print t
 #uniquify
 skimmers["eeee"]=Skimmer(t,cuts["eeee"],"bestZmass",vars4l,"eeeeFinal")
 skimmers["eeee_SS"]=Skimmer(t,cuts["eeee_SS"],"bestZmass",vars4l,"eeee_SSFinal")
-skimmers["eeeeAA"]=Skimmer(t,cuts["eeeeAA"],"BG",vars4l,"eeeeAAFinal")
-skimmers["eeeeAI"]=Skimmer(t,cuts["eeeeAI"],"BG",vars4l,"eeeeAIFinal")
-skimmers["eeeeIA"]=Skimmer(t,cuts["eeeeIA"],"BG",vars4l,"eeeeIAFinal")
+skimmers["eeeeAA"]=Skimmer(t,cuts["eeeeAA"],"BG",vars4l,"eeeeAAFinal",True)
+skimmers["eeeeAI"]=Skimmer(t,cuts["eeeeAI"],"BG",vars4l,"eeeeAIFinal",True)
+skimmers["eeeeIA"]=Skimmer(t,cuts["eeeeIA"],"BG",vars4l,"eeeeIAFinal",True)
 skimmers["eeeeAA_SS"]=Skimmer(t,cuts["eeeeAA_SS"],"BG",vars4l,"eeeeAA_SSFinal")
 skimmers["eeeeAI_SS"]=Skimmer(t,cuts["eeeeAI_SS"],"BG",vars4l,"eeeeAI_SSFinal")
 skimmers["eeeeIA_SS"]=Skimmer(t,cuts["eeeeIA_SS"],"BG",vars4l,"eeeeIA_SSFinal")
@@ -107,9 +107,9 @@ skimmers["eeeeIA_SS"]=Skimmer(t,cuts["eeeeIA_SS"],"BG",vars4l,"eeeeIA_SSFinal")
 t=f.Get("muMuMuMuEventTree/eventTree")
 skimmers["mmmm"]=Skimmer(t,cuts["mmmm"],"bestZmass",vars4l,"mmmmFinal")
 skimmers["mmmm_SS"]=Skimmer(t,cuts["mmmm_SS"],"bestZmass",vars4l,"mmmm_SSFinal")
-skimmers["mmmmAA"]=Skimmer(t,cuts["mmmmAA"],"BG",vars4l,"mmmmAAFinal")
-skimmers["mmmmAI"]=Skimmer(t,cuts["mmmmAI"],"BG",vars4l,"mmmmAIFinal")
-skimmers["mmmmIA"]=Skimmer(t,cuts["mmmmIA"],"BG",vars4l,"mmmmIAFinal")
+skimmers["mmmmAA"]=Skimmer(t,cuts["mmmmAA"],"BG",vars4l,"mmmmAAFinal",True)
+skimmers["mmmmAI"]=Skimmer(t,cuts["mmmmAI"],"BG",vars4l,"mmmmAIFinal",True)
+skimmers["mmmmIA"]=Skimmer(t,cuts["mmmmIA"],"BG",vars4l,"mmmmIAFinal",True)
 skimmers["mmmmAA_SS"]=Skimmer(t,cuts["mmmmAA_SS"],"BG",vars4l,"mmmmAA_SSFinal")
 skimmers["mmmmAI_SS"]=Skimmer(t,cuts["mmmmAI_SS"],"BG",vars4l,"mmmmAI_SSFinal")
 skimmers["mmmmIA_SS"]=Skimmer(t,cuts["mmmmIA_SS"],"BG",vars4l,"mmmmIA_SSFinal")
