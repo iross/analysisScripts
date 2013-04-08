@@ -43,8 +43,6 @@ pt20_10 = Selector([
     ])
 
 z1ee = Selector([
-	"z1l1Pt>20",
-	"z1l2Pt>10",
 	"z1l1MissHits<2",
 	"z1l2MissHits<2",
     "abs(z1l1Eta)<2.5",
@@ -58,8 +56,6 @@ z1ee = Selector([
 	])
 
 z1mm = Selector([
-	"z1l1Pt>20",
-	"z1l2Pt>10",
     "abs(z1l1Eta)<2.4",
     "abs(z1l2Eta)<2.4",
     "abs(z1l1SIP)<4",
@@ -281,8 +277,8 @@ mmAI = Selector([
     "abs(z2l2dXY)<0.5",
     "abs(z2l1dz)<1.0",
     "abs(z2l2dz)<1.0",
-	"abs(z2l1Eta)<2.5",
-	"abs(z2l2Eta)<2.5",
+	"abs(z2l1Eta)<2.4",
+	"abs(z2l2Eta)<2.4",
 	"((!z2l1isPF) || !(z2l1pfCombIso2012<0.40))",
     "(z2l1isTracker||z2l1isGlobal)", #'loose' req.
 	"(z2l2isTracker||z2l2isGlobal)&&z2l2isPF",
@@ -298,8 +294,8 @@ mmIA = Selector([
     "abs(z2l2dz)<1.0",
 	"z2l1Pt>5",
 	"z2l2Pt>5",
-	"abs(z2l1Eta)<2.5",
-	"abs(z2l2Eta)<2.5",
+	"abs(z2l1Eta)<2.4",
+	"abs(z2l2Eta)<2.4",
     "(z2l2isTracker||z2l2isGlobal)",
 	"((!z2l2isPF) || !(z2l2pfCombIso2012<0.40))",
 	"(z2l1isTracker||z2l1isGlobal)&&z2l1isPF",
@@ -315,8 +311,8 @@ mmAA = Selector([
     "abs(z2l2dz)<1.0",
 	"z2l1Pt>5",
 	"z2l2Pt>5",
-	"abs(z2l1Eta)<2.5",
-	"abs(z2l2Eta)<2.5",
+	"abs(z2l1Eta)<2.4",
+	"abs(z2l2Eta)<2.4",
     "z2l1Pt>z2l2Pt", #avoid duplicate combos (Z+lep3+lep4 vs Z+lep4+lep3)
     "(z2l1isGlobal||z2l1isTracker)",
     "(z2l2isGlobal||z2l2isTracker)",
