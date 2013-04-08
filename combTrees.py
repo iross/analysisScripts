@@ -37,7 +37,7 @@ def arbitrate(event1,event2, method=''):
         if abs(event1['z1Mass']-91.2)<abs(event2['z1Mass']-91.2):
             event1['bestBGcand'] = 1
             return [ event1 ]
-        elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2) and event1['z2l1Pt']!=event2['z2l1Pt'] and event1['z2l2Pt']!=event2['z2l2Pt']: #same Z1 but not same fakes.. return both
+        elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2) and (event1['z2l1Pt']!=event2['z2l1Pt'] or event1['z2l2Pt']!=event2['z2l2Pt']): #same Z1 but not same fakes.. return both
             if event2['z2l1Pt']+event2['z2l2Pt'] > sumPtMax:
                 event2['bestBGcand'] = 1
                 event1['bestBGcand'] = 0
