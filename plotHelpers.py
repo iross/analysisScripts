@@ -329,6 +329,6 @@ def makeBGhist(f,state,var,customBinning,bins,extra="1",binNorm=False,fakeRates=
     return stateBG
 
 def main():
-    print "...what are you doing here? simplePlots.py just hosts a bunch of helper functions."
+    print "...what are you doing here? This is just a bunch of helper functions."
 
 if __name__=='__main__':main()

@@ -1,4 +1,4 @@
-from simplePlots import *
+from plotHelpers import *
 
 class Plotter():
     """Class for handling 1D plots"""

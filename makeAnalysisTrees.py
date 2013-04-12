@@ -4,7 +4,7 @@ import sys
 import getopt
 from RecoLuminosity.LumiDB import argparse
 from SkimmerClass import Skimmer
-from simplePlots import *
+from plotHelpers import *
 
 #todo: threading?
 

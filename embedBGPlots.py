@@ -6,7 +6,7 @@ Description: Calculate the BG histograms and embed them in a root file. Use afte
 
 from RecoLuminosity.LumiDB import argparse
 from ROOT import *
-from simplePlots import applyFakes, makeBGhist
+from plotHelpers import applyFakes, makeBGhist
 
 parser = argparse.ArgumentParser(description='Shove the final BG histograms into the data root file.')
 parser.add_argument('--file',type=str,required=True,default='',help='Input file')

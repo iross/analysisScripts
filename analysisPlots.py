@@ -1,5 +1,5 @@
 from ROOT import *
-from simplePlots import *
+from plotHelpers import *
 import math
 import re
 import os

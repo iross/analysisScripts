@@ -8,7 +8,7 @@ import sys
 from ROOT import *
 from CommonSelectors import *
 from Selector import *
-from simplePlots import *
+from plotHelpers import *
 import numpy as N
 import logging
 from progressbar import Bar, ETA, ProgressBar, ReverseBar

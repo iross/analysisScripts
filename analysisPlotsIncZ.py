@@ -1,6 +1,6 @@
 #!/Library/Frameworks/EPD64.framework/Versions/Current/bin//python
 from ROOT import *
-from simplePlots import *
+from plotHelpers import *
 import math
 import os
 from optparse import OptionParser
@@ -104,7 +104,7 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
 
     fzj=TFile("DYJets_lite.root")
     zj=getTrees(fzj,"")
-    
+
 #    fh=TFile("ggH125_lite.root")
 #    ht=getTrees(fh,"")
 
@@ -221,7 +221,7 @@ def makePlots(dir="2012",postfix="8TeV",lumi="2.95",extra="1",var="z1Mass",varNi
         hs=THStack("hs","stack bg")
 #        hs.Add(zjh[state])
 #        hs.Add(zzh[state])
-        hs.Add(hh[state])   
+        hs.Add(hh[state])
 #        print state,zzh[state].Integral()
         ymax=max(dh[state].GetMaximum(),hs.GetMaximum())
         ymax=ceil(ymax+sqrt(ymax))
