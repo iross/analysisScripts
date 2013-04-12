@@ -20,6 +20,9 @@ class Skimmer(object):
     def setEvents(self):
         """Get event list"""
         self.events=uniquify(self.tree,self.cuts,self.arbMode,self.vars,self.allVars)
+    def makeHighMassTree(self):
+        """Return TTree composed of events"""
+        return makeHighMassTree(self.events,self.outTree)
     def makeTree(self):
         """Return TTree composed of events"""
         return makeTree(self.events,self.outTree)

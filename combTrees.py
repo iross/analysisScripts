@@ -127,6 +127,24 @@ def makeTree(events,name):
         newTree.Fill()
     return newTree
 
+def makeHighMassTree(events,name):
+    """Takes dict of events, returns a new tree with appropriate variables"""
+    n={}
+    newTree=TTree(name+"highMass",name+"highMass")
+    newTree.SetAutoSave(3000000000)
+    try:
+        for var in sorted(events[events.keys()[0]]): #ugh.
+            n[var]=N.zeros(1,dtype=float)
+            newTree.Branch(var,n[var],var+'/d')
+    except IndexError:
+        return newTree
+    for i in events:
+        if events[i]["bestZmass"]>60 and events[i]["bestZmass"]<120 and events[i]["subBestZmass"]>60 and events[i]["subBestZmass"]<120:
+            for var in events[i].keys():
+                n[var][0]=events[i][var]
+            newTree.Fill()
+    return newTree
+
 def combineTrees(file,tree1,cuts1,tree2,cuts2,vars,name="eleelemumueventtreemerged"):
     """combines two trees, removing overlap between them. returns the merged tree"""
     f=TFile(file)
