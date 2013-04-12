@@ -29,7 +29,7 @@ else:
     iso="pfCombIso2012"
 
 #vars to store
-vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"__WEIGHT__","__WEIGHT__noPU","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso","pt","z1Pt","z2Pt","nElectrons","nMuons"]
+vars4l = ["mass","z1Mass","z2Mass","z1l1Pt","z1l2Pt","z2l1Pt","z2l2Pt","bestZmass","subBestZmass","RUN","LUMI","EVENT","met","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"__WEIGHT__","__WEIGHT__noPU","z1l1"+iso,"z1l2"+iso,"z2l1"+iso,"z2l2"+iso,"weight","weightnoPU","z1l1Eta","z1l2Eta","z2l1Eta","z2l2Eta","massNoFSR","z1l1Phi","z1l2Phi","z2l1Phi","z2l2Phi","z2Charge","z1l1pfPhotonIso","z1l1PhotonIso","z1l2pfPhotonIso","z1l2PhotonIso","z2l1pfPhotonIso","z2l1PhotonIso","z2l2pfPhotonIso","z2l2PhotonIso","pt","z1Pt","z2Pt","nElectrons","nMuons","rho"]
 for thing in ["z2l1isGlobal","z2l1isTracker","z2l1isPF","z2l1mvaNonTrigPass","z2l1MissHits","z2l1mvaNonTrigPass","kd"]:
     vars4l.append(thing)
 varsZ = ["mass","l1Pt","l2Pt","l1Eta","l2Eta","l1Phi","l2Phi","RUN","LUMI","EVENT","met","l1"+iso,"l2"+iso,"__WEIGHT__","__WEIGHT__noPU","l1SIP","l2SIP"]
@@ -167,6 +167,8 @@ for i in skimmers:
     fout=TFile(outfile,"update") #open/close this every time for memory relief?
     skimmers[i].setEvents()
     skimmers[i].makeTree().Write()
+    if "eeee" in i or "eemm" in i or "mmee" in i or "mmmm" in i:
+        skimmers[i].makeHighMassTree().Write()
     skimmers[i].clear()
     fout.Close()
 
