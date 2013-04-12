@@ -9,15 +9,17 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
 ROOT.gROOT.SetBatch(True)
 
-def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1], name="temp"):
+def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1], name="temp",binNorm=False):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
     h = TH1F(name,name,nbin,xmin,xmax)
-    h.Sumw2()
     if customBinning:
         h = TH1F(name,name,len(bins)-1,array('d',bins))
     if overflow:
-        hist.SetBinContent(nbin,hist.GetBinContent(nbin)+hist.GetBinContent(nbin+1))
+        h.SetBinContent(nbin,hist.GetBinContent(nbin)+hist.GetBinContent(nbin+1))
+    h.Sumw2()
     tree.Draw(var+">>"+name,cuts,"goff")
+    if binNorm:
+        h.Scale(1.0,"width")
     return h
 
 def makeHist2D(tree, cuts, varx, nbinx, xmin, xmax, vary, nbiny, ymin, ymax, customBinning=False, bins=[0,1]):
@@ -49,19 +51,15 @@ def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
 #        maxY=max(maxY,h[tree.GetDirectory().GetName()+names[i]].GetMaximum()/h[tree.GetDirectory().GetName()+names[i]].Integral())
         i=i+1
     i=0
-    print h
     for hist in h:
         #temp normalize both to 5.1
         if "2012C" in hist:
-            print h[hist].Integral()
             h[hist].Scale(5.05/3.67)
-            print h[hist].Integral()
 #        h[hist].Scale(1/h[hist].Integral())
         h[hist].SetLineColor(colors[i])
         h[hist].SetMarkerStyle(markers[i])
         h[hist].SetMarkerColor(colors[i])
         h[hist].SetLineWidth(2)
-        print i
         h[hist].SetName(names[i])
         h[hist].SetTitle(names[i])
         leg.AddEntry(h[hist])
@@ -77,10 +75,8 @@ def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
                 h[hist].GetYaxis().SetRange(0,15)
             h[hist].Draw(drawOptions)
         else:
-            print "drrrrrawing"
             h[hist].Draw(drawOptions+"same")
         i+=1
-        print h[hist].Integral()
     leg.SetFillColor(kWhite)
     leg.SetShadowColor(0)
     leg.Draw()
@@ -100,8 +96,6 @@ def getYields(file, lumi, cuts=""):
         h2.Sumw2()
 #		t.Draw("1>>h2","(1)*__WEIGHT__noPU*__CORRnoHLT__*"+lumi+cuts)
         t.Draw("1>>h2","(1)*__WEIGHT__noPU*__CORR__*"+lumi+cuts)
-        print tree,"--",round(h2.GetBinContent(2)*149/139,2),"+/-",round(h2.GetBinError(2)*149/139,2)
-#		print tree,"--",round(h2.GetBinContent(2),2),"+/-",round(h2.GetBinError(2),2)
         h.Delete()
         h2.Delete()
 
@@ -152,11 +146,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
         mden = TH1F("mden","mden",12,0,120)
     #todo: re-implement the nElectron/nMuon vetos
     enum.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
-    print  "num:"
-    print defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleNum.cuts())+extra
     eden.Add(makeHist(file.Get("eeeFinal"),var,defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
-    print  "den:"
-    print defineCuts(common.cuts(),z1ee.cuts(),z1relIsoNoFSR.cuts(),eleDen.cuts())+extra
     enum.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIsoNoFSR.cuts(),eleNum.cuts())+extra,12,0,120,False,customBinning,bins))
     eden.Add(makeHist(file.Get("mmeFinal"),var,defineCuts(common.cuts(),z1mm.cuts(),z1relIsoNoFSR.cuts(),eleDen.cuts())+extra,12,0,120,False,customBinning,bins))
 
@@ -201,8 +191,8 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
-def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],quiet=False):
-    """Apply fakerates."""
+def applyFakes(file,measExtra,extra="1",var="mass",lowZ1=True,customBinning=False,bins=[0,1],quiet=False,binNorm=False,fakeRates=[0,0]):
+    """Apply fakerates to predefined control regions."""
     try:
         file=TFile(file)
         print "This will work a bit better if you pass an open TFile!"
@@ -210,15 +200,15 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
         pass
 
     regions=["eeeeAAFinal","eeeeAIFinal","eeeeIAFinal","mmmmAAFinal","mmmmAIFinal","mmmmIAFinal","mmeeAAFinal","mmeeAIFinal","mmeeIAFinal","eemmAAFinal","eemmAIFinal","eemmIAFinal","eeeeAA_SSFinal","eeeeAI_SSFinal","eeeeIA_SSFinal","mmmmAA_SSFinal","mmmmAI_SSFinal","mmmmIA_SSFinal","mmeeAA_SSFinal","mmeeAI_SSFinal","mmeeIA_SSFinal","eemmAA_SSFinal","eemmAI_SSFinal","eemmIA_SSFinal"]
-    fakerates=measureLeptonFakes(file,extra=extra)
+
     BGs={}
     ns={}
     hists={}
     for reg in regions:
         if "eeee" in reg or "mmee" in reg:
-            fr=fakerates[0]
+            fr=fakeRates[0]
         elif "eemm" in reg or "mmmm" in reg:
-            fr=fakerates[1]
+            fr=fakeRates[1]
         else:
             sysexit("Can't figure out which fakerate to use!")
         t=file.Get(reg)
@@ -227,10 +217,10 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
             ns[reg]=0
             continue
         if lowZ1:
-            t=t.CopyTree("mass>100&&mass<600&&((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<40&&z2Mass>40&&z2Mass<120))")
+            t=t.CopyTree("mass>100&&mass<600&&((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<40&&z2Mass>40&&z2Mass<120))&&"+extra)
 #            t=t.CopyTree("mass>100&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         else:
-            t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600")
+            t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600&&"+extra)
 #            t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         n=t.GetEntries()
         if "AA" in reg:
@@ -239,15 +229,12 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
         else:
             scale=fr/(1-fr)
             expected=n*scale
-        h=makeHist(t,var,"",50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg)
+        h=makeHist(t,var,extra,50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg,binNorm=binNorm)
         h.Sumw2()
         BGs[reg]=expected
         ns[reg]=n
         h.Scale(scale)
         hists[reg]=h.Clone(reg)
-
-    #print out interesting stuff
-    fakerates=measureLeptonFakes(file,extra=extra)
 
     if not quiet:
         print(file.GetName()+" ('real' Z extended to 12-40: "+str(lowZ1)+")")
@@ -257,7 +244,6 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
         for reg in sorted(BGs):
             if "SS" in reg:
                 print reg,'--',BGs[reg],'(',ns[reg],')'
-    #    print "---- Final Estimates (AI+IA-AA) ----"
         print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
         print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
         print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
@@ -268,26 +254,6 @@ def applyFakes(file,extra,var="mass",lowZ1=True,customBinning=False,bins=[0,1],q
 
     return hists
 
-
-def main():
-    f1 = TFile("BG_StdIso.root")
-    f2 = TFile("Z2Jets_BGStdIso.root")
-    c = TCanvas()
-#	files=[f1,f2]
-    files = [f1]
-    hs = THStack("hs","stacked")
-    for f in files:
-        t = f.Get("eleEleMuMuEventTree_antiIso/eventTree")
-        histEEMM = makeHist(t,"z2Mass",defineCuts(common.cuts(),stdIso("z1l1",0.275,"ele",True),stdIso("z1l2",0.275,"ele",True),"!"+stdIso("z2l1",0.275,"mu"),"!"+stdIso("z2l2",0.275,"mu"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"),12,0,120)
-    print "---- Final Estimates (AI+IA-AA) ----"
-    print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
-    print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
-    print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
-    print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"]
-    print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"]
-    print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"]+BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"]
-
-
 def addText(string,x1,y1,x2,y2):
     """ Return stylized string for stickin' on plots"""
     pav=TPaveText(x1,y1,x2,y2)
@@ -296,11 +262,11 @@ def addText(string,x1,y1,x2,y2):
     pav.SetBorderSize(1)
     return pav
 
-def makeBGhist(f,state,var,customBinning,bins):
+def makeBGhist(f,state,var,customBinning,bins,extra="1",binNorm=False,fakeRates=[0,0]):
     """Write the scaled background hists to the TFile on a common canvas"""
     """Also returns the final BG histogram"""
 
-    hists=applyFakes(f,extra="&&z1Mass>81&&z1Mass<101",var=var,lowZ1=True,customBinning=customBinning,bins=bins)
+    hists=applyFakes(f,measExtra="&&z1Mass>81&&z1Mass<101",extra=extra,var=var,lowZ1=True,customBinning=customBinning,bins=bins,binNorm=binNorm,fakeRates=fakeRates)
     # if mmee, add eemm
     ROOT.gROOT.ProcessLine(".X CMSStyle.C")
     c1=TCanvas()
@@ -360,44 +326,9 @@ def makeBGhist(f,state,var,customBinning,bins):
     stateBG.Draw()
     stateBG.SetTitle(state+"BG")
     stateBG.SetName(state+"BG")
-#    stateBG.Write()
     return stateBG
 
-
 def main():
-    f1 = TFile("BG_StdIso.root")
-    f2 = TFile("Z2Jets_BGStdIso.root")
-    c = TCanvas()
-#	files=[f1,f2]
-    files = [f1]
-    hs = THStack("hs","stacked")
-    for f in files:
-        t = f.Get("eleEleMuMuEventTree_antiIso/eventTree")
-        histEEMM = makeHist(t,"z2Mass",defineCuts(common.cuts(),stdIso("z1l1",0.275,"ele",True),stdIso("z1l2",0.275,"ele",True),"!"+stdIso("z2l1",0.275,"mu"),"!"+stdIso("z2l2",0.275,"mu"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"),12,0,120)
-        fit(histEEMM)
-        t = f.Get("muMuEleEleEventTree_antiIso/eventTree")
-        histMMEE = makeHist(t,"z2Mass",defineCuts(common.cuts(),stdIso("z1l1",0.275,"mu",True),stdIso("z1l2",0.275,"mu",True),"!"+stdIso("z2l1",0.275,"ele"),"!"+stdIso("z2l2",0.275,"ele"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"),12,0,120)
-        fit(histMMEE)
-        t = f.Get("muMuMuMuEventTree_antiIso/eventTree")
-        histMMMM = makeHist(t,"z2Mass",defineCuts(common.cuts(),stdIso("z1l1",0.275,"mu",True),stdIso("z1l2",0.275,"mu",True),"!"+stdIso("z2l1",0.275,"mu"),"!"+stdIso("z2l2",0.275,"mu"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"),12,0,120)
-        fit(histMMMM)
-        t = f.Get("eleEleEleEleEventTree_antiIso/eventTree")
-        histEEEE = makeHist(t,"z2Mass",defineCuts(common.cuts(),stdIso("z1l1",0.275,"ele",True),stdIso("z1l2",0.275,"ele",True),"!"+stdIso("z2l1",0.275,"ele"),"!"+stdIso("z2l2",0.275,"ele"),z1Sip.cuts(),"z2Charge==0&&z2Mass>12&&z2Mass<120"),12,0,120)
-        fit(histEEEE)
-        print f.GetName()
-        if "Z2" in f.GetName():
-            print "Z2j"
-            hist.SetFillColor(kRed)
-#		hist.Draw()
-#		print hist.Integral()
-#		hs.Add(hist)
-#	hs.Draw()
-    histEEMM.Add(histMMEE)
-    histEEMM.Add(histMMMM)
-    histEEMM.Add(histEEEE)
-    print "Total total total:",histEEMM.Integral()
-    fit(histEEMM)
-    c.Update()
-    raw_input("Press Enter")
+    print "...what are you doing here? simplePlots.py just hosts a bunch of helper functions."
 
 if __name__=='__main__':main()
