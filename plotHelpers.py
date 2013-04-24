@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 ROOT.gROOT.ProcessLine(".X CMSStyle.C")
-ROOT.gROOT.SetBatch(True)
+#ROOT.gROOT.SetBatch(True)
 
 def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=False, bins=[0,1], name="temp",binNorm=False):
     #	logging.debug("Making hist with %i bins, from %d to %d",nbin,xmin,xmax)
@@ -43,25 +43,23 @@ def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
     xmin=min(bins)
     xmax=max(bins)
     h={}
+    name={}
     maxY=0
     i=0
     for tree in trees:
         h[tree.GetDirectory().GetName()+names[i]]=makeHist(tree, var, cuts, nbin, xmin, xmax, False, True, bins)
-        maxY=max(maxY,h[tree.GetDirectory().GetName()+names[i]].GetMaximum())
-#        maxY=max(maxY,h[tree.GetDirectory().GetName()+names[i]].GetMaximum()/h[tree.GetDirectory().GetName()+names[i]].Integral())
+        name[tree.GetDirectory().GetName()+names[i]]=names[i]
+        maxY=max(maxY,h[tree.GetDirectory().GetName()+names[i]].GetMaximum()/h[tree.GetDirectory().GetName()+names[i]].Integral())
         i=i+1
     i=0
     for hist in h:
-        #temp normalize both to 5.1
-        if "2012C" in hist:
-            h[hist].Scale(5.05/3.67)
-#        h[hist].Scale(1/h[hist].Integral())
+        h[hist].Scale(1/h[hist].Integral())
         h[hist].SetLineColor(colors[i])
         h[hist].SetMarkerStyle(markers[i])
         h[hist].SetMarkerColor(colors[i])
         h[hist].SetLineWidth(2)
-        h[hist].SetName(names[i])
-        h[hist].SetTitle(names[i])
+        h[hist].SetName(name[hist])
+        h[hist].SetTitle(name[hist])
         leg.AddEntry(h[hist])
         if i==0:
             h[hist].GetXaxis().SetTitle(var)
