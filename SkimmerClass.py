@@ -8,7 +8,7 @@ from Selector import *
 
 class Skimmer(object):
     """Skimmer class. Accepts TTree, cuts, etc, and sorts through them, returning unique and arbitrated event sets"""
-    def __init__(self, tree, cuts, arbMode, vars, outTree, allVars=False):
+    def __init__(self, tree, cuts, arbMode, vars, outTree, allVars=True):
         super(Skimmer, self).__init__()
         self.tree = tree
         self.cuts = cuts
