@@ -6,6 +6,8 @@ from sys import exit
 import numpy as np
 gSystem.Load("RooUnfold-1.1.1/libRooUnfold");
 
+ROOT.gROOT.SetBatch(True)
+
 debug=True
 #debug=False
 
@@ -167,19 +169,19 @@ unfoldedHist.Draw('p')
 dataHist.SetLineColor(kRed)
 dataHist.SetLineWidth(2)
 dataHist.SetMarkerSize(0.00001)
-dataHist.Draw("h same")
+#dataHist.Draw("h same")
 dataHistTrue.SetLineColor(kBlue)
 dataHistTrue.SetLineWidth(2)
 dataHistTrue.SetMarkerSize(0.00001)
 #dataHistTrue.Draw("h same")
 
-leg=TLegend(legX,legY,legX+0.3,legY+0.35)
+leg=TLegend(legX,legY,legX+0.3,legY+0.25)
 
-leg.SetHeader(treeNiceName)
+#leg.SetHeader(treeNiceName)
 #legend
 leg.SetFillColor(kWhite)
 #leg.AddEntry(dataHistTrue,"Truth","l")
-leg.AddEntry(dataHist,"Measured","l")
+#leg.AddEntry(dataHist,"Measured","l")
 leg.AddEntry(unfoldedHist,"Unfolded","p")
 
 print "--------"+args.nice+"-----------"
@@ -206,28 +208,39 @@ if debug:
     trainingMeas.SetMarkerSize(0.00001)
 #    trainingMeas.Draw("h same")
 #redraw data hists
-dataHist.Draw("h same")
+#dataHist.Draw("h same")
 unfoldedHist.Draw("p same")
-
-leg.SetBorderSize(1)
+leg.SetBorderSize(0)
+leg.SetFillStyle(0)
 leg.Draw()
+binrange=bins[len(bins)-1]-bins[0]
+tex = TLatex(bins[0]+0.02*binrange,ymax*1.05,"CMS Preliminary 2012");
+tex2 = TLatex(bins[0]+0.62*binrange,ymax*1.05,str(lumi)+"fb^{-1}, \sqrt{s}=8 TeV");
+tex.Draw()
+tex2.Draw()
+pad1.RedrawAxis()
 can.cd()
 pad2 = TPad("pad2","pad2",0,0,1,0.2);
 pad2.SetBottomMargin(0.125);
-pad2.SetTopMargin(0.1);
+pad2.SetTopMargin(0.05);
 pad2.SetRightMargin(0.07);
 pad2.SetLeftMargin(0.18)
 pad2.Draw()
 pad2.cd()
-temp=trainingTrue.Clone()
+temp=unfoldedHist.Clone()
+temp.SetMarkerSize(1.0)
 temp.SetLineColor(kBlack)
-temp.Divide(unfoldedHist)
-temp.GetYaxis().SetRangeUser(0.5,1.5)
-temp.GetYaxis().SetTitle("MC/Data")
-temp.GetYaxis().SetTitleSize(0.12)
-temp.GetYaxis().SetNdivisions(410)
+temp.Divide(trainingTrue)
+temp.GetYaxis().SetRangeUser(0.0,2.0)
+temp.GetYaxis().SetTitle("Data/MC")
+temp.GetYaxis().SetTitleSize(0.20)
+temp.GetXaxis().SetTitleSize(0.00)
+temp.GetYaxis().SetTitleOffset(0.25)
+temp.GetYaxis().SetNdivisions(4)
 temp.SetLabelSize(0.0,"X")
-temp.SetLabelSize(0.09,"Y")
+temp.SetLabelSize(0.13,"Y")
+
+#temp.SetLabelOffset(0.25,"Y")
 temp.Draw()
 can.cd()
 can.SaveAs(args.plotname+".png")
