@@ -15,7 +15,7 @@ def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=Fa
     if customBinning:
         h = TH1F(name,name,len(bins)-1,array('d',bins))
     if overflow:
-        h.SetBinContent(nbin,hist.GetBinContent(nbin)+hist.GetBinContent(nbin+1))
+        h.SetBinContent(nbin,h.GetBinContent(nbin)+h.GetBinContent(nbin+1))
     h.Sumw2()
     tree.Draw(var+">>"+name,cuts,"goff")
     if binNorm:
@@ -33,10 +33,10 @@ def makeHist2D(tree, cuts, varx, nbinx, xmin, xmax, vary, nbiny, ymin, ymax, cus
         tree.Draw(vary+":"+varx+">>h",cuts,"")
         return h
 
-def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
+def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix="",nice=""):
     """Compare variables from some trees"""
     can=TCanvas("can","can",600,600)
-    leg=TLegend(0.7,0.7,0.9,0.9)
+    leg=TLegend(0.6,0.7,0.9,0.9)
     colors=[kBlack,kBlue,kRed,kGreen,kCyan,kRed-9]
     markers=[20,22,24,26,29,34]
     nbin=len(bins)
@@ -47,7 +47,7 @@ def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
     maxY=0
     i=0
     for tree in trees:
-        h[tree.GetDirectory().GetName()+names[i]]=makeHist(tree, var, cuts, nbin, xmin, xmax, False, True, bins)
+        h[tree.GetDirectory().GetName()+names[i]]=makeHist(tree, var, cuts[i], nbin, xmin, xmax, False, True, bins)
         name[tree.GetDirectory().GetName()+names[i]]=names[i]
         maxY=max(maxY,h[tree.GetDirectory().GetName()+names[i]].GetMaximum()/h[tree.GetDirectory().GetName()+names[i]].Integral())
         i=i+1
@@ -62,11 +62,11 @@ def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
         h[hist].SetTitle(name[hist])
         leg.AddEntry(h[hist])
         if i==0:
-            h[hist].GetXaxis().SetTitle(var)
+            h[hist].GetXaxis().SetTitle(nice)
             h[hist].GetYaxis().SetRangeUser(0,maxY*1.15)
             if bins[0]-bins[1] == bins[len(bins)-2]-bins[len(bins)-1]: # if spaced evenly
                 div=(float(bins[len(bins)-1])-float(bins[0]))/(len(bins)-1)
-                h[hist].GetYaxis().SetTitle("Events / %.2f" %div)
+                h[hist].GetYaxis().SetTitle("a.u.")
                 h[hist].GetYaxis().SetRange(0,15)
             else:
                 h[hist].GetYaxis().SetTitle("Events")
@@ -79,6 +79,7 @@ def compTrees(trees,var,bins,cuts="1",names=[""],drawOptions="h",prefix=""):
     leg.SetShadowColor(0)
     leg.Draw()
     can.SaveAs(prefix+"comp"+var+".png")
+    can.SaveAs(prefix+"comp"+var+".pdf")
     return can
 
 def getYields(file, lumi, cuts=""):
@@ -189,7 +190,7 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     print "\t",mnum.Integral()/mden.Integral(),"=",mnum.Integral(),"/",mden.Integral()
     return [enum.Integral()/eden.Integral(),mnum.Integral()/mden.Integral(),eleFr,muFr]
 
-def applyFakes(file,measExtra,extra="1",var="mass",lowZ1=True,customBinning=False,bins=[0,1],quiet=False,binNorm=False,fakeRates=[0,0]):
+def applyFakes(file,extra="1",var="mass",lowZ1=True,customBinning=False,bins=[0,1],quiet=False,binNorm=False,fakeRates=[0,0]):
     """Apply fakerates to predefined control regions."""
     try:
         file=TFile(file)
@@ -201,6 +202,7 @@ def applyFakes(file,measExtra,extra="1",var="mass",lowZ1=True,customBinning=Fals
 
     BGs={}
     ns={}
+    errs={}
     hists={}
     for reg in regions:
         if "eeee" in reg or "mmee" in reg:
@@ -213,6 +215,7 @@ def applyFakes(file,measExtra,extra="1",var="mass",lowZ1=True,customBinning=Fals
         if t.GetEntries()==0:
             BGs[reg]=0
             ns[reg]=0
+            errs[reg]=0
             continue
         if lowZ1:
             t=t.CopyTree("mass>100&&mass<600&&((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<40&&z2Mass>40&&z2Mass<120))&&"+extra)
@@ -224,31 +227,31 @@ def applyFakes(file,measExtra,extra="1",var="mass",lowZ1=True,customBinning=Fals
         if "AA" in reg:
             scale=fr*fr/(1-fr)/(1-fr)
             expected=n*scale
+            err = n**0.5 * scale
         else:
             scale=fr/(1-fr)
             expected=n*scale
+            err = n**0.5 * scale
         h=makeHist(t,var,extra,50,100,600,customBinning=customBinning,bins=bins,name="h_"+reg,binNorm=binNorm)
         h.Sumw2()
         BGs[reg]=expected
         ns[reg]=n
+        errs[reg]=err
         h.Scale(scale)
         hists[reg]=h.Clone(reg)
 
     if not quiet:
         print(file.GetName()+" ('real' Z extended to 12-40: "+str(lowZ1)+")")
         for reg in sorted(BGs):
-            if "SS" not in reg:
-                print reg,'--',BGs[reg],'(',ns[reg],')'
-        for reg in sorted(BGs):
-            if "SS" in reg:
-                print reg,'--',BGs[reg],'(',ns[reg],')'
-        print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"]
-        print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"]
-        print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"]
-        print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"],"[observed:",file.Get("eeee_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-        print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"],"[observed:",file.Get("mmmm_SSFinal").GetEntries("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-        print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"],"[observed:",file.Get("mmee_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
-        print "eemm (SS):",BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"],"[observed:",file.Get("eemm_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600"),"]"
+            if 'SS' not in reg:
+                print reg,'--',BGs[reg],'+/-',errs[reg],' (',ns[reg],')'
+        print "eeee:",BGs["eeeeAIFinal"]+BGs["eeeeIAFinal"]-BGs["eeeeAAFinal"],"+/-",(errs["eeeeAIFinal"]**2+errs["eeeeIAFinal"]**2+errs["eeeeAAFinal"]**2)**0.5
+        print "mmmm:",BGs["mmmmAIFinal"]+BGs["mmmmIAFinal"]-BGs["mmmmAAFinal"],"+/-",(errs["mmmmAIFinal"]**2+errs["mmmmIAFinal"]**2+errs["mmmmAAFinal"]**2)**0.5
+        print "mmee:",BGs["mmeeAIFinal"]+BGs["mmeeIAFinal"]-BGs["mmeeAAFinal"]+BGs["eemmAIFinal"]+BGs["eemmIAFinal"]-BGs["eemmAAFinal"],"+/-",(errs["mmeeAIFinal"]**2+errs["mmeeIAFinal"]**2+errs["mmeeAAFinal"]**2+errs["eemmAIFinal"]**2+errs["eemmIAFinal"]**2+errs["eemmAAFinal"]**2)**0.5
+        print "eeee (SS):",BGs["eeeeAI_SSFinal"]+BGs["eeeeIA_SSFinal"]-BGs["eeeeAA_SSFinal"],"[observed:",file.Get("eeee_SSFinal").GetEntries("mass>100&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"),"]"
+        print "mmmm (SS):",BGs["mmmmAI_SSFinal"]+BGs["mmmmIA_SSFinal"]-BGs["mmmmAA_SSFinal"],"[observed:",file.Get("mmmm_SSFinal").GetEntries("mass>100&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"),"]"
+        print "mmee (SS):",BGs["mmeeAI_SSFinal"]+BGs["mmeeIA_SSFinal"]-BGs["mmeeAA_SSFinal"],"[observed:",file.Get("mmee_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"),"]"
+        print "eemm (SS):",BGs["eemmAI_SSFinal"]+BGs["eemmIA_SSFinal"]-BGs["eemmAA_SSFinal"],"[observed:",file.Get("eemm_oSSFinal").GetEntries("z1Mass==bestZmass&&mass>100&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"),"]"
 
     return hists
 
@@ -264,7 +267,7 @@ def makeBGhist(f,state,var,customBinning,bins,extra="1",binNorm=False,fakeRates=
     """Write the scaled background hists to the TFile on a common canvas"""
     """Also returns the final BG histogram"""
 
-    hists=applyFakes(f,measExtra="&&z1Mass>81&&z1Mass<101",extra=extra,var=var,lowZ1=True,customBinning=customBinning,bins=bins,binNorm=binNorm,fakeRates=fakeRates)
+    hists=applyFakes(f,extra=extra,var=var,lowZ1=False,customBinning=customBinning,bins=bins,binNorm=binNorm,fakeRates=fakeRates)
     # if mmee, add eemm
     ROOT.gROOT.ProcessLine(".X CMSStyle.C")
     c1=TCanvas()
