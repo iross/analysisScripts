@@ -20,9 +20,9 @@ from progressbar import Bar, ETA, ProgressBar, ReverseBar
 def arbitrate(event1,event2, method=''):
     """Takes a pair of events, chooses which one to keep"""
     if method=='bestZmass':
-        if abs(event1['z1Mass']-91.2)<abs(event2['z1Mass']-91.2):
+        if abs(event1['z1Mass']-91.1876)<abs(event2['z1Mass']-91.1876):
             return [ event1 ]
-        elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2):
+        elif abs(event1['z1Mass']-91.1876)==abs(event2['z1Mass']-91.1876):
             if (event1['z2l1Pt']+event1['z2l2Pt'] > event2['z2l1Pt']+event2['z2l2Pt']):
                 return [ event1 ]
             else:
@@ -34,10 +34,10 @@ def arbitrate(event1,event2, method=''):
     if method is 'BG':
         # Keep track of which candidate is the 'best' (maximizing sumPt of Z2 leptons?)
         sumPtMax = event1['z2l1Pt']+event1['z2l2Pt']
-        if abs(event1['z1Mass']-91.2)<abs(event2['z1Mass']-91.2):
+        if abs(event1['z1Mass']-91.1876)<abs(event2['z1Mass']-91.1876):
             event1['bestBGcand'] = 1
             return [ event1 ]
-        elif abs(event1['z1Mass']-91.2)==abs(event2['z1Mass']-91.2) and (event1['z2l1Pt']!=event2['z2l1Pt'] or event1['z2l2Pt']!=event2['z2l2Pt']): #same Z1 but not same fakes.. return both
+        elif abs(event1['z1Mass']-91.1876)==abs(event2['z1Mass']-91.1876) and (event1['z2l1Pt']!=event2['z2l1Pt'] or event1['z2l2Pt']!=event2['z2l2Pt']): #same Z1 but not same fakes.. return both
             if event2['z2l1Pt']+event2['z2l2Pt'] > sumPtMax:
                 event2['bestBGcand'] = 1
                 event1['bestBGcand'] = 0
@@ -54,7 +54,54 @@ def arbitrate(event1,event2, method=''):
 #    else if method == '':
         #return the first
 
-def uniquify(tree, cuts, arbMode,vars,allVars=False):
+def dPhi(phi1,phi2):
+    dtemp=phi1-phi2
+    if dtemp<-3.14:
+        return dtemp+6.28
+    elif dtemp>3.14:
+        return dtemp-6.28
+    else:
+        return dtemp
+
+def addDPhis(event):
+    """Adds delta Phi between Zs, between leptons of Zs"""
+    try:
+        event['dPhi_z1_z2'] = dPhi(event['z1Phi'],event['z2Phi'])
+        event['dPhi_z1l1_z1l2'] = dPhi(event['z1l1Phi'],event['z1l2Phi'])
+        event['dPhi_z2l1_z2l2'] = dPhi(event['z2l1Phi'],event['z2l2Phi'])
+    except KeyError:
+        return
+    return
+
+def addDRs(event):
+    """Add DRs between candidate Zs/leptons and the gen-level info (if it exists)"""
+    dr = lambda eta1, eta2, phi1, phi2 : sqrt((eta1-eta2)**2+dPhi(phi1,phi2)**2)
+    try:
+        event['dR_z1_gz1'] = dr(event['z1Eta'],event['gz1Eta'],event['z1Phi'],event['gz1Phi'])
+        event['dR_z1_gz2'] = dr(event['z1Eta'],event['gz2Eta'],event['z1Phi'],event['gz2Phi'])
+        event['dR_z2_gz1'] = dr(event['z2Eta'],event['gz1Eta'],event['z2Phi'],event['gz1Phi'])
+        event['dR_z2_gz2'] = dr(event['z2Eta'],event['gz2Eta'],event['z2Phi'],event['gz2Phi'])
+        event['dR_z1l1_gl1']=dr(event['z1l1Eta'],event['gl1Eta'],event['z1l1Phi'],event['gl1Phi'])
+        event['dR_z1l1_gl2']=dr(event['z1l1Eta'],event['gl2Eta'],event['z1l1Phi'],event['gl2Phi'])
+        event['dR_z1l1_gl3']=dr(event['z1l1Eta'],event['gl3Eta'],event['z1l1Phi'],event['gl3Phi'])
+        event['dR_z1l1_gl4']=dr(event['z1l1Eta'],event['gl4Eta'],event['z1l1Phi'],event['gl4Phi'])
+        event['dR_z1l2_gl1']=dr(event['z1l2Eta'],event['gl1Eta'],event['z1l2Phi'],event['gl1Phi'])
+        event['dR_z1l2_gl2']=dr(event['z1l2Eta'],event['gl2Eta'],event['z1l2Phi'],event['gl2Phi'])
+        event['dR_z1l2_gl3']=dr(event['z1l2Eta'],event['gl3Eta'],event['z1l2Phi'],event['gl3Phi'])
+        event['dR_z1l2_gl4']=dr(event['z1l2Eta'],event['gl4Eta'],event['z1l2Phi'],event['gl4Phi'])
+        event['dR_z2l1_gl1']=dr(event['z2l1Eta'],event['gl1Eta'],event['z2l1Phi'],event['gl1Phi'])
+        event['dR_z2l1_gl2']=dr(event['z2l1Eta'],event['gl2Eta'],event['z2l1Phi'],event['gl2Phi'])
+        event['dR_z2l1_gl3']=dr(event['z2l1Eta'],event['gl3Eta'],event['z2l1Phi'],event['gl3Phi'])
+        event['dR_z2l1_gl4']=dr(event['z2l1Eta'],event['gl4Eta'],event['z2l1Phi'],event['gl4Phi'])
+        event['dR_z2l2_gl1']=dr(event['z2l2Eta'],event['gl1Eta'],event['z2l2Phi'],event['gl1Phi'])
+        event['dR_z2l2_gl2']=dr(event['z2l2Eta'],event['gl2Eta'],event['z2l2Phi'],event['gl2Phi'])
+        event['dR_z2l2_gl3']=dr(event['z2l2Eta'],event['gl3Eta'],event['z2l2Phi'],event['gl3Phi'])
+        event['dR_z2l2_gl4']=dr(event['z2l2Eta'],event['gl4Eta'],event['z2l2Phi'],event['gl4Phi'])
+    except KeyError:
+        return
+    #this sure am awful. todo
+
+def uniquify(tree, cuts, arbMode,vars,allVars=True):
     """Takes a tree as input, applies cuts, and returns a tree with only one entry per event."""
 #    tree.SetBranchStatus("*",0)
     tree.SetBranchStatus("jetsPt20",0)
@@ -75,10 +122,11 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
             vars.append(branch.GetName())
     for event in cleanTree:
         eventID=str(event.EVENT/event.met) #divide by met to make sure no EVENT repetitions (relevant especially to MC)
+
         if eventID not in events:
             events[eventID]={}
             myDic={}
-            for var in vars:
+            for var in vars: # do I really need to do all this? What if I just pop out the event content later? IAR 22.Apr.2013
                 try:
                     myDic[var]=event.GetLeaf(var).GetValue()
                 except ReferenceError:
@@ -86,6 +134,8 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
                     continue
             if arbMode is "BG":
                 myDic['bestBGcand'] = 1
+            addDRs(myDic)
+            addDPhis(myDic)
             events[eventID]=myDic
         else:
             tempEvent={}
@@ -94,6 +144,8 @@ def uniquify(tree, cuts, arbMode,vars,allVars=False):
                     tempEvent[var]=event.GetLeaf(var).GetValue()
                 except ReferenceError:
                    continue
+            addDRs(tempEvent)
+            addDPhis(tempEvent)
             if arbMode is "BG":
                 neweventID=str(event.EVENT/event.z2l1Phi/event.z2l2Phi) #want the combinations to be unique, not the events todo: pick Z1 first?
                 arbResult=arbitrate(events[eventID],tempEvent,method=arbMode)
@@ -125,6 +177,7 @@ def makeTree(events,name):
         for var in events[i].keys():
             n[var][0]=events[i][var]
         newTree.Fill()
+    # add TnP corrections
     return newTree
 
 def makeHighMassTree(events,name):
@@ -143,6 +196,7 @@ def makeHighMassTree(events,name):
             for var in events[i].keys():
                 n[var][0]=events[i][var]
             newTree.Fill()
+    #add TnP corrections
     return newTree
 
 def combineTrees(file,tree1,cuts1,tree2,cuts2,vars,name="eleelemumueventtreemerged"):
