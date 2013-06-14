@@ -57,7 +57,7 @@ def applyCorrs(corrs,hist):
         temp.SetBinContent(i,temp.GetBinContent(i)*corrs[i])
     return temp
 
-def main():
+def unfold():
     parser = argparse.ArgumentParser(description='Make cleaned up trees (one entry per event, smaller set of vars, etc...)')
     parser.add_argument('--tree',type=str,required=True,default='',help='Tree name')
     parser.add_argument('--nice',type=str,required=True,default='',help='Nice name (for legend label)')
@@ -175,10 +175,14 @@ def main():
     print tTrueSherpa
     print tMeasSherpa
     corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args.nice,varMeas=varMeas)
+
+    corrDiffs = [abs(corrsS[i]-corrs[i]) for i in range(len(corrs))]
+
     print "Corrections:",corrs
     print "Efficiency:",eff
     print "Corrections (Sherpa):",corrsS
     print "Efficiency: (Sherpa)",effS
+    print "Correction diffs: ",corrDiffs
     print "----------------"
     print "Acceptance:",trainingFileGen.Get("genlevel/genEventTree").GetEntries(extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+")")/trainingFileGen.Get("MMMM/results").GetBinContent(1),"=",trainingFileGen.Get("genlevel/genEventTree").GetEntries(extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+")"),"/",trainingFileGen.Get("MMMM/results").GetBinContent(1)
 
@@ -198,10 +202,22 @@ def main():
     # remove integrated lumi
     sig_fid = unfoldedHist.Integral()
     unfoldedHist.Scale(1/sig_fid)
+    unfoldedHistWSyst = unfoldedHist.Clone()
     dataHist.Scale(1/dataHist.Integral())
     sig_fidS = unfoldedHistSherpa.Integral()
     unfoldedHistSherpa.Scale(1/sig_fidS)
     #dataHistTrue.Scale(1/dataHistTrue.Integral())
+
+    # add systematics for unfolding
+    for i in range(unfoldedHistWSyst.GetNbinsX()+1):
+        print "Bin %s! Nominal value is: %s" % (str(i),str(unfoldedHistWSyst.GetBinContent(i)))
+        print "Diff is %s" % str(abs(unfoldedHist.GetBinContent(i)-unfoldedHistSherpa.GetBinContent(i)))
+        print "Error was: %s" % str(unfoldedHistWSyst.GetBinError(i))
+        newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHistSherpa.GetBinContent(i)-unfoldedHist.GetBinContent(i))**2 # compared to sherpa unfolded
+        newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHist.GetBinContent(i)*0.05)**2 # flat 5%
+        print "Error now: %s" % str(newErrorSq**0.5)
+        unfoldedHistWSyst.SetBinError(i,newErrorSq**0.5)
+
 
     ymax=max(unfoldedHist.GetMaximum(),unfoldedHist.GetMaximum())
     #ymax=ymax*1.05*(1+1/ymax**0.5)
@@ -220,7 +236,7 @@ def main():
     unfoldedHist.GetYaxis().SetTitle("1/#sigma_{fid} d #sigma_{fid}/d("+xTitle+")")
     unfoldedHist.GetXaxis().SetTitle(xTitle)
     unfoldedHist.Draw('p')
-    unfoldedHistSherpa.SetLineColor(kPink+10)
+#    unfoldedHistSherpa.SetLineColor(kPink+10)
 
     dataHist.SetLineColor(kRed)
     dataHist.SetLineWidth(2)
@@ -237,9 +253,10 @@ def main():
     #legend
     leg.SetFillColor(kWhite)
     #leg.AddEntry(dataHistTrue,"Truth","l")
-    leg.AddEntry(dataHist,"Measured","l")
-    leg.AddEntry(unfoldedHist,"Unfolded","p")
-    leg.AddEntry(unfoldedHistSherpa,"Unfolded via Sherpa","l")
+#    leg.AddEntry(dataHist,"Measured","l")
+    leg.AddEntry(unfoldedHist,"Unfolded Data","pe")
+    leg.AddEntry(unfoldedHistWSyst,"Total Error","f")
+#    leg.AddEntry(unfoldedHistSherpa,"Unfolded via Sherpa","l")
 
     print "--------"+args.nice+"-----------"
     print "Data:",dataHist.Integral()
@@ -255,18 +272,40 @@ def main():
         trainingTrue.SetFillColor(kAzure-9)
         trainingMeas.SetLineColor(kBlack)
         leg.AddEntry(trainingTrue,"POWHEG+gg","f")
-        leg.AddEntry(trainingMeas,"training measured","l")
+#        leg.AddEntry(trainingMeas,"training measured","l")
         trainingTrue.SetLineWidth(2)
         trainingTrue.SetMarkerSize(0.00001)
         trainingTrue.Scale(1/trainingTrue.Integral())
         trainingTrue.Draw("h same")
+
+        # true/meas SHERPA
+#        trainingTrueSherpa=makeHist(tTrueSherpa,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+"))*("+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
+#        trainingTrueSherpa.SetLineColor(kGreen+3)
+#        trainingTrueSherpa.SetLineWidth(3)
+#        trainingTrueSherpa.SetMarkerSize(0.00001)
+#        trainingTrueSherpa.Scale(1/trainingTrueSherpa.Integral())
+#        trainingMeasSherpa=makeHist(tMeasSherpa,varMeas,"((z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))*("+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
+#        trainingMeasSherpa.SetLineColor(kGreen-7)
+#        trainingMeasSherpa.SetLineWidth(3)
+#        trainingMeasSherpa.SetMarkerSize(0.00001)
+#        trainingMeasSherpa.Scale(1/trainingMeasSherpa.Integral())
+
+#        trainingTrueSherpa.Draw("h same")
+#        trainingMeasSherpa.Draw("h same")
+#        leg.AddEntry(trainingTrueSherpa,"SHERPA true","l")
+#        leg.AddEntry(trainingMeasSherpa,"SHERPA measured","l")
+
         trainingMeas.Scale(1/trainingMeas.Integral())
         trainingMeas.SetLineWidth(2)
         trainingMeas.SetMarkerSize(0.00001)
-        trainingMeas.Draw("h same")
+#        trainingMeas.Draw("h same")
+    unfoldedHistWSyst.SetFillColor(kGray+2)
+    unfoldedHistWSyst.SetFillStyle(3004)
+    unfoldedHistWSyst.Draw("e2same") #draw errors as rectangle
     #redraw data hists
-    dataHist.Draw("h same")
+#    dataHist.Draw("h same")
     unfoldedHist.Draw("p same")
+#    unfoldedHistSherpa.Draw("h same")
     leg.SetBorderSize(0)
     leg.SetFillStyle(0)
     leg.Draw()
@@ -287,7 +326,13 @@ def main():
     temp=unfoldedHist.Clone()
     temp.SetMarkerSize(1.0)
     temp.SetLineColor(kBlack)
+    tempWSyst=unfoldedHistWSyst.Clone()
+    tempWSyst.SetMarkerSize(1.0)
+    tempWSyst.SetFillColor(kGray+2)
+    tempWSyst.SetFillStyle(3004)
+    temp.SetLineColor(kBlack)
     temp.Divide(trainingTrue)
+    tempWSyst.Divide(trainingTrue)
     temp.GetYaxis().SetRangeUser(0.0,2.0)
     temp.GetYaxis().SetTitle("Data/MC")
     temp.GetYaxis().SetTitleSize(0.20)
@@ -299,16 +344,27 @@ def main():
 
     #temp.SetLabelOffset(0.25,"Y")
     temp.Draw()
+    tempWSyst.Draw("e2same")
+    temp.Draw("psame")
     can.cd()
-    can.SaveAs(args.plotname+".png")
-    can.SaveAs(args.plotname+".root")
-    can.SaveAs(args.plotname+".C")
+    can.SaveAs("diffDists/"+args.plotname+".png")
+    can.SaveAs("diffDists/"+args.plotname+".root")
+    can.SaveAs("diffDists/"+args.plotname+".C")
+    can.Delete()
+    pass
+
+    SetOwnership(pad1,False)
+    SetOwnership(pad2,False)
 
     trainingFile.Close()
     trainingFileGen.Close()
     testFile.Close()
     testFileGen.Close()
     fout.Close()
+
+def main():
+    """docstring for main"""
+    unfold()
 
 if __name__ == "__main__":
     main()
