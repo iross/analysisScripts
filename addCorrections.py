@@ -12,6 +12,13 @@ from RecoLuminosity.LumiDB import argparse
 from ROOT import *
 import numpy as N
 
+def ruinFriendships(file,tree):
+    """Remove all friend relationships from a ttree"""
+    for friend in tree.GetListOfFriends():
+        print friend
+        print friend.GetName()
+        tree.RemoveFriend(file.Get(friend.GetName()))
+
 def lepW(hist,lPt,lEta):
     """Return weight for lepton, given histogram."""
     weight=1.0
@@ -92,18 +99,20 @@ def main(args):
         print "Working on",t.GetName(),":",tree.GetEntries(),"events found"
 
         leps,leplegs=parseLeps(t.GetName())
-        n={args.branch: N.zeros(1,dtype=float), "scale_up": N.zeros(1,dtype=float), "scale_down": N.zeros(1,dtype=float)}
+        n={args.branch: N.zeros(1,dtype=float), "scale_up": N.zeros(1,dtype=float), "scale_down": N.zeros(1,dtype=float), "mstw_ct": N.zeros(1,dtype=float)}
         pt=0.0
         eta=0.0
 
         newtree.Branch(args.branch,n[args.branch],args.branch+'/d')
         newtree.Branch("scale_up",n["scale_up"],"scale_up"+'/d')
         newtree.Branch("scale_down",n["scale_down"],"scale_down"+'/d')
+        newtree.Branch("mstw8_ct10",n["mstw_ct"],"mstw8_ct10"+'/d')
 
         for i in tree:
             weight=1.0
             up=1.0
             down=1.0
+            mstw_ct=1.0
             for l in range(len(leps)): # for each lepton, figure out type and get its weight.
                 try:
                     pt = i.GetLeaf(leplegs[l]+"Pt").GetValue()
@@ -113,16 +122,16 @@ def main(args):
                     continue
                 if leps[l] is "e":
                     weight*=lepW(he,pt,eta)
-                    up*=0.98 + 0.0005*pt - 0.000004*pt**2
-                    down*= 0.99 - 0.0002*pt + 0.000003*pt**2
                 elif leps[l] is "m":
                     weight*=lepW(hm,pt,eta)
-                    up*=0.98 + 0.0005*pt - 0.000004*pt**2
-                    down*= 0.99 - 0.0002*pt + 0.000003*pt**2
+                up*=1.02 - 0.0004 * pt
+                down*=0.98 + 0.0004 * pt
+                mstw_ct *= 0.85 + 0.0028 * pt
 
             n[args.branch][0]=weight
             n["scale_up"][0]=up
             n["scale_down"][0]=down
+            n["mstw_ct"][0]=mstw_ct
             newtree.Fill()
         newtree.Write()
         tree.AddFriend(newtree.GetName())
@@ -130,19 +139,19 @@ def main(args):
 
     fin.Close()
 #    combineTrees
-    #make total 4l tree
+
+    #make total 4l tree, preserving friends
     fout2=TFile(args.filein,"UPDATE")
     fout2.Delete("llllTree*;*")
-
     llllTree=TChain("llllTree")
-    for tree in ["eeeeFinal","mmeeFinal","mmmmFinal"]:
-        fout2.Get(tree).RemoveFriend(fout2.Get(tree+"_corr")) # needed so that combining the trees into llll doesn't hork up the corrections
+    llll_friend=TChain("llll_friend")
+#    ruinFriendships(fout.Get(x)) for x in ["eeeeFinal", "mmeeFinal", "mmmmFinal"]
+
     llllTree.Add(args.filein+"/eeeeFinal")
     llllTree.Add(args.filein+"/mmeeFinal")
     llllTree.Add(args.filein+"/mmmmFinal")
     llllTreeFinal=llllTree.CloneTree()
 
-    llll_friend=TChain("llll_friend")
     llll_friend.Add(args.filein+"/eeeeFinal_corr")
     llll_friend.Add(args.filein+"/mmeeFinal_corr")
     llll_friend.Add(args.filein+"/mmmmFinal_corr")
@@ -150,6 +159,7 @@ def main(args):
 
     try:
         llllTreeFinal.SetName("llllTree")
+        ruinFriendships(fout2,llllTreeFinal)
         llll_friendFinal.SetName("llllTree_corr")
         llll_friendFinal.Write()
         llllTreeFinal.AddFriend(llll_friendFinal.GetName())
