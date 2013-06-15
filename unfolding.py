@@ -20,7 +20,7 @@ def parseBins(string):
         bins=[float(i) for i in string.split(',')]
     return bins
 
-def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,nice,varMeas="dummy",massreq="(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120)"):
+def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",massreq="(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120)"):
     """Returns array of size nbins with bin-by-bin (truth:measured) ratios."""
     """No mathing done between truth events and reco events! Bulk corrections only!"""
     if varMeas is "dummy": #if I'm lazy and don't pass a varMeas, assume it's the same as the true
@@ -32,22 +32,37 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,nice,varMeas="dummy",ma
     measHist=makeHist(measTree,varMeas,massreq,25,100,600,True,True,bins,binNorm=False) #no acceptance cuts--they're implied in the measured trees already, no matching Z with gen
     trueHist=makeHist(trueTree,varTrue,accCuts+"&&"+massreq,25,100,600,True,True,bins,binNorm=False)
     efficiency=measHist.Integral()/trueHist.Integral()
-    print "Efficiency (%s):" % nice,efficiency,"=",measHist.Integral(),"/",trueHist.Integral()
-    print "Efficiency (%s):" % nice,measTree.GetEntries(massreq)/trueTree.GetEntries(accCuts+"&&"+massreq)
-    print "Efficiency (%s):" % nice,measTree.GetEntries(massreq),"/",trueTree.GetEntries(accCuts+"&&"+massreq)
+    print "Efficiency (%s):" % args.nice,efficiency,"=",measHist.Integral(),"/",trueHist.Integral()
+    print "Efficiency (%s):" % args.nice,measTree.GetEntries(massreq)/trueTree.GetEntries(accCuts+"&&"+massreq)
+    print "Efficiency (%s):" % args.nice,measTree.GetEntries(massreq),"/",trueTree.GetEntries(accCuts+"&&"+massreq)
     trueHist.Draw()
     measHist.SetLineColor(kGreen)
     measHist.Draw("hsame")
-
-
     corrs=[]
+    # todo: make a histogram with the correction factors.
+    corrH = TH1F("corr_H","corr_H",len(bins)-1,array('d',bins))
+    corrH.Sumw2()
     for i in range(len(bins)):
         rat=0.0
         try:
             rat=trueHist.GetBinContent(i)/measHist.GetBinContent(i)
             corrs.append(rat)
+            corrH.SetBinContent(i,rat)
         except ZeroDivisionError:
             corrs.append(rat)
+            corrH.SetBinContent(i,rat)
+    can=TCanvas("can","can",600,600)
+    print corrs
+    print corrH.GetBinContent(2)
+    print corrH.Integral()
+    can.cd()
+    corrH.Draw("p")
+    can.SaveAs("diffDists/"+args.plotname+"_binCorrs.png")
+    can.SaveAs("diffDists/"+args.plotname+"_binCorrs.pdf")
+    can.SaveAs("diffDists/"+args.plotname+"_binCorrs.C")
+    can.SaveAs("diffDists/"+args.plotname+"_binCorrs.root")
+    corrH.Delete()
+    can.Delete()
     return corrs,efficiency
 
 def applyCorrs(corrs,hist):
@@ -169,12 +184,12 @@ def unfold():
     dataTreeTrue = testFileGen.Get("genlevel/genEventTree")
     dataTree = testFile.Get(treename)
 
-    corrs,eff=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args.nice,varMeas=varMeas)
+    corrs,eff=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
     # sherpa stuff for systematics
-    corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args.nice,varMeas=varMeas)
+    corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
     print tTrueSherpa
     print tMeasSherpa
-    corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args.nice,varMeas=varMeas)
+    corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
 
     corrDiffs = [abs(corrsS[i]-corrs[i]) for i in range(len(corrs))]
 
