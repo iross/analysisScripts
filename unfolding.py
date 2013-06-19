@@ -1,12 +1,14 @@
+from __future__ import division
 from ROOT import *
 from plotHelpers import *
 from combTrees import makeTree
 from RecoLuminosity.LumiDB import argparse
 from sys import exit
 import numpy as np
+import pdb
 gSystem.Load("RooUnfold-1.1.1/libRooUnfold");
 #
-ROOT.gROOT.SetBatch(True)
+#ROOT.gROOT.SetBatch(True)
 
 debug=True
 #debug=False
@@ -20,6 +22,51 @@ def parseBins(string):
         bins=[float(i) for i in string.split(',')]
     return bins
 
+def purity(trueTree,measTree,trueVar,measVar,hist,accCuts,massReq):
+    """measure purity of a bin, n_{reco+gen}/n_{rec}"""
+    rec={}
+    gen={}
+    ftemp=TFile("temp.root","recreate")
+    tTree=trueTree.CopyTree(accCuts+"&&"+massReq)
+    mTree=measTree.CopyTree(massReq)
+    for i in tTree:
+        gen[i.EVENT] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(trueVar).GetValue()), "var":i.GetLeaf(trueVar).GetValue()}
+    for i in mTree:
+        rec[i.EVENT] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(measVar).GetValue()), "var":i.GetLeaf(measVar).GetValue()}
+
+    genSet=set()
+    recSet=set()
+    for evt in gen.keys(): genSet.add(evt)
+    for evt in rec.keys(): recSet.add(evt)
+    nRec=[]
+    nGen=[]
+    nGenRec=[]
+    for n in range(hist.GetNbinsX()+1):
+        nRec.append(0)
+        nGen.append(0)
+        nGenRec.append(0)
+    genRecSet = recSet.intersection(genSet)
+    for evt in recSet:
+        nRec[rec[evt]['bin']-1] += 1
+        if evt in genRecSet:
+            if gen[evt]['bin']==rec[evt]['bin']:
+                nGenRec[rec[evt]['bin']-1] += 1
+    for evt in genSet:
+        nGen[gen[evt]['bin']-1] += 1
+    return nGen,nRec,nGenRec
+
+def errors(central, errStat, scaleUp, scaleDown, pdf):
+    """Calculate new errors, calculated as stat+syst"""
+    errUp = errStat
+    errDown = errStat
+#    print "*********Creating new error values!**********"
+#    print "Old error is: ",errStat
+#    print "Central value is: %s" % str(central)
+#    print "Scale up value is: %s" % str(scaleUp)
+#    print "Scale down value is: %s" % str(scaleDown)
+#    print "PDF value is: %s" % str(pdf)
+    return [errUp, errDown]
+
 def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",massreq="(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120)"):
     """Returns array of size nbins with bin-by-bin (truth:measured) ratios."""
     """No mathing done between truth events and reco events! Bulk corrections only!"""
@@ -31,36 +78,68 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",ma
 #    measHist=makeHist(measTree,varMeas,massreq+"&&((dR_z1_gz1<0.5&&dR_z2_gz2<0.5)||(dR_z1_gz2<0.5&&dR_z2_gz1<0.5))",25,100,600,True,True,bins,binNorm=False) #no acceptance cuts--they're implied in the measured trees already
     measHist=makeHist(measTree,varMeas,massreq,25,100,600,True,True,bins,binNorm=False) #no acceptance cuts--they're implied in the measured trees already, no matching Z with gen
     trueHist=makeHist(trueTree,varTrue,accCuts+"&&"+massreq,25,100,600,True,True,bins,binNorm=False)
+
+    ngen,nrec,ngenrec=purity(trueTree,measTree,varTrue,varMeas,measHist,accCuts,massreq)
+    effMethod2 = [float(ngen[i])/nrec[i] for i in range(len(ngen))]
+
     efficiency=measHist.Integral()/trueHist.Integral()
     print "Efficiency (%s):" % args.nice,efficiency,"=",measHist.Integral(),"/",trueHist.Integral()
     print "Efficiency (%s):" % args.nice,measTree.GetEntries(massreq)/trueTree.GetEntries(accCuts+"&&"+massreq)
     print "Efficiency (%s):" % args.nice,measTree.GetEntries(massreq),"/",trueTree.GetEntries(accCuts+"&&"+massreq)
+
     trueHist.Draw()
     measHist.SetLineColor(kGreen)
     measHist.Draw("hsame")
     corrs=[]
     # todo: make a histogram with the correction factors.
     corrH = TH1F("corr_H","corr_H",len(bins)-1,array('d',bins))
+    corrH.GetXaxis().SetTitle(args.xTitle)
+    corrH.GetYaxis().SetTitle("Truth/Reco")
+    purityH = TH1F("purityH","purityH",len(bins)-1,array('d',bins))
+    purityH.SetLineColor(kBlue)
+    purityH.SetLineWidth(2)
+    effH = TH1F("effH","effH",len(bins)-1,array('d',bins))
+    effH.SetLineColor(kRed)
+    effH.SetLineWidth(2)
+    corrH2 = TH1F("corrH2","corrH2",len(bins)-1,array('d',bins))
+    corrH2.SetLineColor(kBlack)
+    corrH2.SetLineWidth(2)
     corrH.Sumw2()
-    for i in range(len(bins)):
+    for i in range(len(bins)+1):
         rat=0.0
         try:
             rat=trueHist.GetBinContent(i)/measHist.GetBinContent(i)
             corrs.append(rat)
             corrH.SetBinContent(i,rat)
+            purityH.SetBinContent(i,ngenrec[i-1]/nrec[i-1])
+            effH.SetBinContent(i,ngenrec[i-1]/ngen[i-1])
+            corrH2.SetBinContent(i,ngen[i-1]/nrec[i-1])
         except ZeroDivisionError:
             corrs.append(rat)
             corrH.SetBinContent(i,rat)
     can=TCanvas("can","can",600,600)
+    corrH.GetYaxis().SetRangeUser(0,max(corrs)*1.10)
     print corrs
-    print corrH.GetBinContent(2)
-    print corrH.Integral()
+    print "new method:",effMethod2
     can.cd()
-    corrH.Draw("p")
+    corrH.Draw("ep")
+    effH.Draw("lsame")
+    purityH.Draw("lsame")
+    corrH2.Draw("lsame")
+    leg=TLegend(0.20,0.15,0.9,0.4)
+    leg.SetBorderSize(0)
+    leg.SetFillStyle(0)
+    leg.SetNColumns(2)
+    leg.AddEntry(corrH,"Correction","p")
+    leg.AddEntry(corrH2,"Correction, method 2","l")
+    leg.AddEntry(purityH,"Purity","l")
+    leg.AddEntry(effH,"Efficiency","l")
+    leg.Draw()
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.png")
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.pdf")
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.C")
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.root")
+    pdb.set_trace()
     corrH.Delete()
     can.Delete()
     return corrs,efficiency
@@ -107,7 +186,8 @@ def unfold():
 
     # default
     trainingFile = TFile("/scratch/iross/ZZ_wGen_proper_weights_selected.root")
-    trainingFileGen = TFile("/hdfs/store/user/iross/ZZ_wGen_proper_weights.root")
+#    trainingFileGen = TFile("/hdfs/store/user/iross/ZZ_wGen_proper_weights.root")
+    trainingFileGen = TFile("/scratch/iross/ZZ_wGen_proper_weights.root")
 
     trainingSherpa = TFile("/scratch/iross/aTGC_f4_0p000_0p000_8TeV_sel_forAcc-MC_selected.root")
     trainingSherpaGen = TFile("/scratch/iross/aTGC_f4_0p000_0p000_8TeV_sel_forAcc-MC.root")
@@ -184,12 +264,11 @@ def unfold():
     dataTreeTrue = testFileGen.Get("genlevel/genEventTree")
     dataTree = testFile.Get(treename)
 
-    corrs,eff=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
     # sherpa stuff for systematics
     corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
+    corrs,eff=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
     print tTrueSherpa
     print tMeasSherpa
-    corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
 
     corrDiffs = [abs(corrsS[i]-corrs[i]) for i in range(len(corrs))]
 
@@ -225,12 +304,12 @@ def unfold():
 
     # add systematics for unfolding
     for i in range(unfoldedHistWSyst.GetNbinsX()+1):
-        print "Bin %s! Nominal value is: %s" % (str(i),str(unfoldedHistWSyst.GetBinContent(i)))
-        print "Diff is %s" % str(abs(unfoldedHist.GetBinContent(i)-unfoldedHistSherpa.GetBinContent(i)))
-        print "Error was: %s" % str(unfoldedHistWSyst.GetBinError(i))
+#        print "Bin %s! Nominal value is: %s" % (str(i),str(unfoldedHistWSyst.GetBinContent(i)))
+#        print "Diff is %s" % str(abs(unfoldedHist.GetBinContent(i)-unfoldedHistSherpa.GetBinContent(i)))
+#        print "Error was: %s" % str(unfoldedHistWSyst.GetBinError(i))
         newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHistSherpa.GetBinContent(i)-unfoldedHist.GetBinContent(i))**2 # compared to sherpa unfolded
         newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHist.GetBinContent(i)*0.05)**2 # flat 5%
-        print "Error now: %s" % str(newErrorSq**0.5)
+#        print "Error now: %s" % str(newErrorSq**0.5)
         unfoldedHistWSyst.SetBinError(i,newErrorSq**0.5)
 
 
@@ -283,6 +362,15 @@ def unfold():
     if debug:
         trainingMeas=makeHist(tMeas,varMeas,"((z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))*("+wt+"*"+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
         trainingTrue=makeHist(tTrue,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+"))*(weight*"+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
+        trainingTrueScaleUp=makeHist(tTrue,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+"))*(weight*scale_up*"+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
+        trainingTrueScaleDown=makeHist(tTrue,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+"))*(weight*scale_down*"+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
+        trainingTruePDF=makeHist(tTrue,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+"))*(weight*mstw8_ct10*"+str(lumi)+"*1000)",25,100,600,False,True,bins,binNorm=True)
+
+        #todo: set errors in each bin to be stat+syst(scale up, PDF)
+        for i in range(trainingTrue.GetNbinsX()+1):
+            errors(trainingTrue.GetBinContent(i), trainingTrue.GetBinError(i), trainingTrueScaleUp.GetBinContent(i), trainingTrueScaleDown.GetBinContent(i), trainingTruePDF.GetBinContent(i))
+
+
         trainingTrue.SetLineColor(kAzure-4)
         trainingTrue.SetFillColor(kAzure-9)
         trainingMeas.SetLineColor(kBlack)
