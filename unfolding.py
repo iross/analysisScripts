@@ -7,8 +7,10 @@ from sys import exit
 import numpy as np
 import pdb
 gSystem.Load("RooUnfold-1.1.1/libRooUnfold");
-#
-#ROOT.gROOT.SetBatch(True)
+
+ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.ProcessLine(".X CMSStyle.C")
+ROOT.gStyle.SetPalette(1)
 
 debug=True
 #debug=False
@@ -22,22 +24,116 @@ def parseBins(string):
         bins=[float(i) for i in string.split(',')]
     return bins
 
-def purity(trueTree,measTree,trueVar,measVar,hist,accCuts,massReq):
-    """measure purity of a bin, n_{reco+gen}/n_{rec}"""
-    rec={}
-    gen={}
+class event(object):
+    def __init__(self,id):
+        self.id = id
+
+def val(event,var):
+    """Returns the value of the desired variable."""
+    """Has to parse the variable string and evaluate it within the scope of the event."""
+    val=-137.
+    var=var.replace("zz","event.zz")
+    # if z isn't preceded by "event." OR z, replace it with event.z
+    return val
+
+def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
     ftemp=TFile("temp.root","recreate")
     tTree=trueTree.CopyTree(accCuts+"&&"+massReq)
     mTree=measTree.CopyTree(massReq)
-    for i in tTree:
-        gen[i.EVENT] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(trueVar).GetValue()), "var":i.GetLeaf(trueVar).GetValue()}
+
+    hist_measured=TH1F("hist_measured","hist_measured",len(bins)-1,array('d',bins))
+    hist_truth=TH1F("hist_truth","hist_truth",len(bins)-1,array('d',bins))
+    print "about to make the RooUnfoldResponse"
+    print hist_truth
+    print hist_measured
+    response = RooUnfoldResponse(hist_measured, hist_truth);
+
+    recEvents={}
+    nr=0
     for i in mTree:
-        rec[i.EVENT] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(measVar).GetValue()), "var":i.GetLeaf(measVar).GetValue()}
+        recEvents[i.EVENT]={"mass":i.mass,
+                "gMass":i.gMass,
+                "evt":i.EVENT,
+                "gz1Mass":i.gz1Mass,
+                "gz2Mass":i.gz2Mass,
+                "dR_z1_gz1":i.dR_z1_gz1,
+                "dR_z2_gz2":i.dR_z2_gz2,
+                "dR_z1_gz2":i.dR_z1_gz2,
+                "dR_z2_gz1":i.dR_z2_gz1
+                }
+    recSet=set()
+    for i in recEvents:
+        recSet.add(i)
+
+    tTrueEvents={}
+    for i in tTree: #loop over truth events
+        tTrueEvents[i.EVENT]={'zzMass':i.zzMass,
+                'evt':i.EVENT}
+    trueSet=set()
+    for i in tTrueEvents:
+        trueSet.add(i)
+
+    hit=0
+    miss=0
+    agree=0
+    # Training
+    measEvents={}
+    for event in trueSet:
+        if event in recSet:
+            agree=agree+1
+            #hack hack hack to make sure I can still close
+            if (recEvents[event]['dR_z1_gz1'] < 0.5 and recEvents[event]['dR_z2_gz2'] < 0.5) or (recEvents[event]['dR_z1_gz2']<0.5 and recEvents[event]['dR_z2_gz1']<0.5):
+               measEvents[event]=recEvents[event]
+               response.Fill(recEvents[event]['mass'],tTrueEvents[event]['zzMass'])
+               hit=hit+1
+            else:
+                response.Miss(tTrueEvents[event]['zzMass'])
+                miss=miss+1
+        else:
+            response.Miss(tTrueEvents[event]['zzMass'])
+            miss=miss+1
+    print len(trueSet),"true events used in training"
+    print len(recSet),"measured events used for training"
+    print len(recSet-trueSet),"measured not in true"
+    print "hit:",hit
+    print "miss:",miss
+    print "in both true and rec:",agree
+    ftemp.Close()
+    c1=TCanvas("c1","c1",600,600)
+    c1.cd()
+    response.Hresponse().Draw("colz")
+    c1.SaveAs(plotName+"_responseMat.png")
+    c1.Delete()
+    return response
+
+def purity(trueTree,measTree,trueVar,measVar,tmVar,hist,accCuts,massReq):
+    """measure purity of a bin, n_{reco+gen}/n_{rec}"""
+    rec={}
+    gen={}
+    genrec={}
+    ftemp=TFile("temp.root","recreate")
+    tTree=trueTree.CopyTree(accCuts+"&&"+massReq)
+    mTree=measTree.CopyTree(massReq)
+    mGenMassCuts=massReq.replace("z","gz") # fix the junk that's saved with a different name in the rec tree
+    mAccCuts=accCuts.replace("pdgId","PdgId")
+    mAccCuts=mAccCuts.replace("z","gz")
+    mtTree=measTree.CopyTree(massReq+"&&"+mAccCuts+"&&"+mGenMassCuts)
+    for i in tTree:
+        #TODO: this GetLeaf business won't work with the more complicated variables...
+        gen[event(i.EVENT)] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(trueVar).GetValue()), "var":i.GetLeaf(trueVar).GetValue(), "gmass":i.zzMass}
+    for i in mTree:
+#        id = float(i.EVENT)/i.gMass
+        rec[event(i.EVENT)] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(measVar).GetValue()), "var":i.GetLeaf(measVar).GetValue(), "gmass":i.gMass}
+    for i in mtTree:
+        if hist.FindBin(i.GetLeaf(measVar).GetValue()) == hist.FindBin(i.GetLeaf(tmVar).GetValue()):
+            genrec[event(i.EVENT)] = {"evt":i.EVENT, "bin":hist.FindBin(i.GetLeaf(measVar).GetValue()), "var":i.GetLeaf(measVar).GetValue(), "gmass":i.gMass}
 
     genSet=set()
     recSet=set()
+    genRecSet=set()
     for evt in gen.keys(): genSet.add(evt)
     for evt in rec.keys(): recSet.add(evt)
+    for evt in genrec.keys(): genRecSet.add(evt)
     nRec=[]
     nGen=[]
     nGenRec=[]
@@ -45,14 +141,12 @@ def purity(trueTree,measTree,trueVar,measVar,hist,accCuts,massReq):
         nRec.append(0)
         nGen.append(0)
         nGenRec.append(0)
-    genRecSet = recSet.intersection(genSet)
     for evt in recSet:
         nRec[rec[evt]['bin']-1] += 1
-        if evt in genRecSet:
-            if gen[evt]['bin']==rec[evt]['bin']:
-                nGenRec[rec[evt]['bin']-1] += 1
     for evt in genSet:
         nGen[gen[evt]['bin']-1] += 1
+    for evt in genRecSet:
+        nGenRec[genrec[evt]['bin']-1] += 1
     return nGen,nRec,nGenRec
 
 def errors(central, errStat, scaleUp, scaleDown, pdf):
@@ -67,7 +161,7 @@ def errors(central, errStat, scaleUp, scaleDown, pdf):
 #    print "PDF value is: %s" % str(pdf)
     return [errUp, errDown]
 
-def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",massreq="(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120)"):
+def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",massreq="(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120)",tmVar="dummy"):
     """Returns array of size nbins with bin-by-bin (truth:measured) ratios."""
     """No mathing done between truth events and reco events! Bulk corrections only!"""
     if varMeas is "dummy": #if I'm lazy and don't pass a varMeas, assume it's the same as the true
@@ -79,8 +173,14 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",ma
     measHist=makeHist(measTree,varMeas,massreq,25,100,600,True,True,bins,binNorm=False) #no acceptance cuts--they're implied in the measured trees already, no matching Z with gen
     trueHist=makeHist(trueTree,varTrue,accCuts+"&&"+massreq,25,100,600,True,True,bins,binNorm=False)
 
-    ngen,nrec,ngenrec=purity(trueTree,measTree,varTrue,varMeas,measHist,accCuts,massreq)
-    effMethod2 = [float(ngen[i])/nrec[i] for i in range(len(ngen))]
+    ngen,nrec,ngenrec=purity(trueTree,measTree,varTrue,varMeas,tmVar,measHist,accCuts,massreq)
+    response=makeResponse(trueTree,measTree,bins,accCuts,massreq,args.plotname)
+    effMethod2=[]
+    for i in range(len(ngen)):
+        try:
+            effMethod2.append(float(ngen[i])/nrec[i])
+        except ZeroDivisionError:
+            effMethod2.append(0)
 
     efficiency=measHist.Integral()/trueHist.Integral()
     print "Efficiency (%s):" % args.nice,efficiency,"=",measHist.Integral(),"/",trueHist.Integral()
@@ -139,10 +239,9 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",ma
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.pdf")
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.C")
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.root")
-    pdb.set_trace()
     corrH.Delete()
     can.Delete()
-    return corrs,efficiency
+    return corrs,efficiency,response
 
 def applyCorrs(corrs,hist):
     """Apply the true:reco corrections, return the 'unfolded' histogram"""
@@ -158,6 +257,7 @@ def unfold():
     parser.add_argument('--lumi',type=float,required=True,default=19.6,help='Nice name (for legend label)')
     parser.add_argument('--vartrue',type=str,required=True,default='',help='var name (true tree)')
     parser.add_argument('--varmeas',type=str,required=True,default='',help='var name (meas tree)')
+    parser.add_argument('--tmVar',type=str,required=True,default='',help='gen var name (meas tree)')
     parser.add_argument('--xTitle',type=str,required=True,default='',help='var name (meas tree)')
     parser.add_argument('--legX',type=float,required=False,default=0.6,help='')
     parser.add_argument('--legY',type=float,required=False,default=0.5,help='')
@@ -173,6 +273,7 @@ def unfold():
     treeNiceName=args.nice
     varTrue=args.vartrue
     varMeas=args.varmeas
+    tmVar=args.tmVar
     bins=args.bins
     xTitle=args.xTitle
     legX=args.legX
@@ -198,8 +299,8 @@ def unfold():
     #testFile = TFile("ZZJets4L_8TeV_final_wGen_selected.root")
     #testFileGen = TFile("/scratch/iross/ZZJets4L_8TeV_final_wGen-MC.root")
 
-    #testFile=trainingFile
-    #testFileGen=trainingFileGen
+#    testFile=trainingFile
+#    testFileGen=trainingFileGen
 
     idReq="1"
     if "llll" in treename:
@@ -246,8 +347,6 @@ def unfold():
         extra=extra+"&&(abs(z1l2pdgId)==13&&abs(z1l2Eta)<2.4 || abs(z1l2pdgId)==11&& abs(z1l2Eta)<2.5)"
         extra=extra+"&&(abs(z2l1pdgId)==13&&abs(z2l1Eta)<2.4 || abs(z2l1pdgId)==11&& abs(z2l1Eta)<2.5)"
         extra=extra+"&&(abs(z2l2pdgId)==13&&abs(z2l2Eta)<2.4 || abs(z2l2pdgId)==11&& abs(z2l2Eta)<2.5)"
-    print idReq
-    print extra
     acceptanceCuts = extra+idReq
 
     print bins
@@ -265,10 +364,8 @@ def unfold():
     dataTree = testFile.Get(treename)
 
     # sherpa stuff for systematics
-    corrsS,effS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
-    corrs,eff=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args,varMeas=varMeas)
-    print tTrueSherpa
-    print tMeasSherpa
+    corrsS,effS,responseS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas,tmVar=tmVar)
+    corrs,eff,response=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args,varMeas=varMeas,tmVar=tmVar)
 
     corrDiffs = [abs(corrsS[i]-corrs[i]) for i in range(len(corrs))]
 
@@ -281,17 +378,26 @@ def unfold():
     print "Acceptance:",trainingFileGen.Get("genlevel/genEventTree").GetEntries(extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+")")/trainingFileGen.Get("MMMM/results").GetBinContent(1),"=",trainingFileGen.Get("genlevel/genEventTree").GetEntries(extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+")"),"/",trainingFileGen.Get("MMMM/results").GetBinContent(1)
 
 
-    if "DATA" in args.testFile: #don't need to apply weights
+    if "DATA" in testFile.GetName(): #don't need to apply weights
 #        dataHist=makeHist(dataTree,varMeas,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))",25,100,600,False,True,bins,binNorm=True)
 #        dataHistTrue=makeHist(dataTree,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))*0",25,100,600,False,True,bins,binNorm=True)
         dataHist=makeHist(dataTree,varMeas,"((z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))",25,100,600,False,True,bins,binNorm=True)
         dataHistTrue=makeHist(dataTree,varTrue,"((z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))*0",25,100,600,False,True,bins,binNorm=True)
+        unfold = RooUnfoldBayes(response, dataHist, 4)
     else:
-        dataHist=makeHist(dataTree,varMeas,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120))*("+wt+"*1000*"+lumi+"*1.10)",25,100,600,False,True,bins,binNorm=True)
-        dataHistTrue=makeHist(dataTreeTrue,varTrue,"("+extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+"))*("+wt+"*1000*"+lumi+"*1.10)",25,100,600,False,True,bins,binNorm=True)
+#    measHist=makeHist(measTree,varMeas,massreq,25,100,600,True,True,bins,binNorm=False) #no acceptance cuts--they're implied in the measured trees already, no matching Z with gen
+#    trueHist=makeHist(trueTree,varTrue,accCuts+"&&"+massreq,25,100,600,True,True,bins,binNorm=False)
+        dataHist=makeHist(dataTree,varMeas,"(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120)",25,100,600,False,True,bins,binNorm=True)
+        dataHistTrue=makeHist(dataTreeTrue,varTrue,acceptanceCuts+"&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120",25,100,600,False,True,bins,binNorm=True)
+        unfold = RooUnfoldBayes(response, dataHist, 4)
+        unfold.PrintTable(cout,dataHistTrue)
 
-    unfoldedHist=applyCorrs(corrs,dataHist)
+    unfoldedHist = unfold.Hreco()
+#    unfoldedHist=applyCorrs(corrs,dataHist)
     unfoldedHistSherpa=applyCorrs(corrsS,dataHist)
+
+    for i in range(unfoldedHist.GetNbinsX()):
+        print unfoldedHist.GetBinContent(i),dataHist.GetBinContent(i)*corrs[i],dataHist.GetBinContent(i),dataHistTrue.GetBinContent(i)
 
     # remove integrated lumi
     sig_fid = unfoldedHist.Integral()
