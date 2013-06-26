@@ -1,7 +1,7 @@
 from __future__ import division
 from ROOT import *
 from plotHelpers import *
-from combTrees import makeTree
+from combTrees import makeTree, dPhi
 from RecoLuminosity.LumiDB import argparse
 from sys import exit
 import numpy as np
@@ -36,8 +36,7 @@ def val(event,var):
     # if z isn't preceded by "event." OR z, replace it with event.z
     return val
 
-def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
-    ftemp=TFile("temp.root","recreate")
+def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName,var):
     tTree=trueTree.CopyTree(accCuts+"&&"+massReq)
     mTree=measTree.CopyTree(massReq)
 
@@ -51,7 +50,8 @@ def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
     recEvents={}
     nr=0
     for i in mTree:
-        recEvents[i.EVENT]={"mass":i.mass,
+        recEvents[i.EVENT]={"zzMass":i.mass,
+                "zzPt":i.pt,
                 "gMass":i.gMass,
                 "evt":i.EVENT,
                 "gz1Mass":i.gz1Mass,
@@ -61,6 +61,20 @@ def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
                 "dR_z1_gz2":i.dR_z1_gz2,
                 "dR_z2_gz1":i.dR_z2_gz1
                 }
+        if i.z1Pt > i.z2Pt:
+            recEvents[i.EVENT]["z1_eta_by_pt"]=i.z1Eta
+            recEvents[i.EVENT]["z2_eta_by_pt"]=i.z2Eta
+            recEvents[i.EVENT]["z1_pt_by_pt"]=i.z1Pt
+            recEvents[i.EVENT]["z2_pt_by_pt"]=i.z2Pt
+        else:
+            recEvents[i.EVENT]["z1_eta_by_pt"]=i.z2Eta
+            recEvents[i.EVENT]["z2_eta_by_pt"]=i.z1Eta
+            recEvents[i.EVENT]["z1_pt_by_pt"]=i.z2Pt
+            recEvents[i.EVENT]["z2_pt_by_pt"]=i.z1Pt
+        recEvents[i.EVENT]["leading_lep_pt"]=max(max(max(i.z1l1Pt,i.z1l2Pt),i.z2l1Pt),i.z2l2Pt)
+        recEvents[i.EVENT]["dR_Zs"]=sqrt( (i.z1Eta-i.z2Eta)**2 + (i.z1Phi-i.z2Phi)**2)
+        recEvents[i.EVENT]["dPhi_Zs"] = abs(dPhi(i.z1Phi, i.z2Phi))
+
     recSet=set()
     for i in recEvents:
         recSet.add(i)
@@ -68,7 +82,21 @@ def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
     tTrueEvents={}
     for i in tTree: #loop over truth events
         tTrueEvents[i.EVENT]={'zzMass':i.zzMass,
+                'zzPt':i.zzPt,
                 'evt':i.EVENT}
+        if i.z1Pt > i.z2Pt:
+            tTrueEvents[i.EVENT]["z1_eta_by_pt"]=i.z1Eta
+            tTrueEvents[i.EVENT]["z2_eta_by_pt"]=i.z2Eta
+            tTrueEvents[i.EVENT]["z1_pt_by_pt"]=i.z1Pt
+            tTrueEvents[i.EVENT]["z2_pt_by_pt"]=i.z2Pt
+        else:
+            tTrueEvents[i.EVENT]["z1_eta_by_pt"]=i.z2Eta
+            tTrueEvents[i.EVENT]["z2_eta_by_pt"]=i.z1Eta
+            tTrueEvents[i.EVENT]["z1_pt_by_pt"]=i.z2Pt
+            tTrueEvents[i.EVENT]["z2_pt_by_pt"]=i.z1Pt
+        tTrueEvents[i.EVENT]["leading_lep_pt"]=max(max(max(i.z1l1Pt,i.z1l2Pt),i.z2l1Pt),i.z2l2Pt)
+        tTrueEvents[i.EVENT]["dR_Zs"]=sqrt( (i.z1Eta-i.z2Eta)**2 + (i.z1Phi-i.z2Phi)**2)
+        tTrueEvents[i.EVENT]["dPhi_Zs"] = abs(dPhi(i.z1Phi, i.z2Phi))
     trueSet=set()
     for i in tTrueEvents:
         trueSet.add(i)
@@ -84,13 +112,13 @@ def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
             #hack hack hack to make sure I can still close
             if (recEvents[event]['dR_z1_gz1'] < 0.5 and recEvents[event]['dR_z2_gz2'] < 0.5) or (recEvents[event]['dR_z1_gz2']<0.5 and recEvents[event]['dR_z2_gz1']<0.5):
                measEvents[event]=recEvents[event]
-               response.Fill(recEvents[event]['mass'],tTrueEvents[event]['zzMass'])
+               response.Fill(recEvents[event][var],tTrueEvents[event][var])
                hit=hit+1
             else:
-                response.Miss(tTrueEvents[event]['zzMass'])
+                response.Miss(tTrueEvents[event][var])
                 miss=miss+1
         else:
-            response.Miss(tTrueEvents[event]['zzMass'])
+            response.Miss(tTrueEvents[event][var])
             miss=miss+1
     print len(trueSet),"true events used in training"
     print len(recSet),"measured events used for training"
@@ -98,11 +126,13 @@ def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName):
     print "hit:",hit
     print "miss:",miss
     print "in both true and rec:",agree
-    ftemp.Close()
     c1=TCanvas("c1","c1",600,600)
     c1.cd()
+    #  Response matrix as a 2D-histogram: (x,y)=(measured,truth) from http://hepunx.rl.ac.uk/~adye/software/unfold/htmldoc/RooUnfoldResponse.html#RooUnfoldResponse:Hresponse%1
+    response.Hresponse().GetXaxis().SetTitle(plotName+" (Measured)")
+    response.Hresponse().GetYaxis().SetTitle(plotName+" (Truth)")
     response.Hresponse().Draw("colz")
-    c1.SaveAs(plotName+"_responseMat.png")
+    c1.SaveAs("diffDists/"+plotName+"_responseMat.png")
     c1.Delete()
     return response
 
@@ -173,14 +203,14 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",ma
     measHist=makeHist(measTree,varMeas,massreq,25,100,600,True,True,bins,binNorm=False) #no acceptance cuts--they're implied in the measured trees already, no matching Z with gen
     trueHist=makeHist(trueTree,varTrue,accCuts+"&&"+massreq,25,100,600,True,True,bins,binNorm=False)
 
-    ngen,nrec,ngenrec=purity(trueTree,measTree,varTrue,varMeas,tmVar,measHist,accCuts,massreq)
-    response=makeResponse(trueTree,measTree,bins,accCuts,massreq,args.plotname)
+#    ngen,nrec,ngenrec=purity(trueTree,measTree,varTrue,varMeas,tmVar,measHist,accCuts,massreq)
+    response=makeResponse(trueTree,measTree,bins,accCuts,massreq,args.plotname,varTrue)
     effMethod2=[]
-    for i in range(len(ngen)):
-        try:
-            effMethod2.append(float(ngen[i])/nrec[i])
-        except ZeroDivisionError:
-            effMethod2.append(0)
+#    for i in range(len(ngen)):
+#        try:
+#            effMethod2.append(float(ngen[i])/nrec[i])
+#        except ZeroDivisionError:
+#            effMethod2.append(0)
 
     efficiency=measHist.Integral()/trueHist.Integral()
     print "Efficiency (%s):" % args.nice,efficiency,"=",measHist.Integral(),"/",trueHist.Integral()
@@ -211,9 +241,9 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",ma
             rat=trueHist.GetBinContent(i)/measHist.GetBinContent(i)
             corrs.append(rat)
             corrH.SetBinContent(i,rat)
-            purityH.SetBinContent(i,ngenrec[i-1]/nrec[i-1])
-            effH.SetBinContent(i,ngenrec[i-1]/ngen[i-1])
-            corrH2.SetBinContent(i,ngen[i-1]/nrec[i-1])
+#            purityH.SetBinContent(i,ngenrec[i-1]/nrec[i-1])
+#            effH.SetBinContent(i,ngenrec[i-1]/ngen[i-1])
+#            corrH2.SetBinContent(i,ngen[i-1]/nrec[i-1])
         except ZeroDivisionError:
             corrs.append(rat)
             corrH.SetBinContent(i,rat)
@@ -223,17 +253,17 @@ def getBinFactors(trueTree,measTree,varTrue,bins,accCuts,args,varMeas="dummy",ma
     print "new method:",effMethod2
     can.cd()
     corrH.Draw("ep")
-    effH.Draw("lsame")
-    purityH.Draw("lsame")
-    corrH2.Draw("lsame")
+#    effH.Draw("lsame")
+#    purityH.Draw("lsame")
+#    corrH2.Draw("lsame")
     leg=TLegend(0.20,0.15,0.9,0.4)
     leg.SetBorderSize(0)
     leg.SetFillStyle(0)
     leg.SetNColumns(2)
     leg.AddEntry(corrH,"Correction","p")
-    leg.AddEntry(corrH2,"Correction, method 2","l")
-    leg.AddEntry(purityH,"Purity","l")
-    leg.AddEntry(effH,"Efficiency","l")
+#    leg.AddEntry(corrH2,"Correction, method 2","l")
+#    leg.AddEntry(purityH,"Purity","l")
+#    leg.AddEntry(effH,"Efficiency","l")
     leg.Draw()
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.png")
     can.SaveAs("diffDists/"+args.plotname+"_binCorrs.pdf")
@@ -290,8 +320,8 @@ def unfold():
 #    trainingFileGen = TFile("/hdfs/store/user/iross/ZZ_wGen_proper_weights.root")
     trainingFileGen = TFile("/scratch/iross/ZZ_wGen_proper_weights.root")
 
-    trainingSherpa = TFile("/scratch/iross/aTGC_f4_0p000_0p000_8TeV_sel_forAcc-MC_selected.root")
-    trainingSherpaGen = TFile("/scratch/iross/aTGC_f4_0p000_0p000_8TeV_sel_forAcc-MC.root")
+#    trainingSherpa = TFile("/scratch/iross/aTGC_f4_0p000_0p000_8TeV_sel_forAcc-MC_selected.root")
+#    trainingSherpaGen = TFile("/scratch/iross/aTGC_f4_0p000_0p000_8TeV_sel_forAcc-MC.root")
 
     #trainingFile = TFile("/scratch/iross/qqZZ_dev_v2.root")
     #trainingFileGen = TFile("/hdfs/store/user/iross/qqZZ_dev_v2_selected.root")
@@ -356,24 +386,24 @@ def unfold():
 
     fout=TFile("out.root","recreate")
     tMeas=trainingFile.Get(treename)
-    tTrue=trainingFileGen.Get("genlevel/genEventTree")
-    tMeasSherpa=trainingSherpa.Get(treename)
-    tTrueSherpa=trainingSherpaGen.Get("genlevel/genEventTree")
+    tTrue=trainingFileGen.Get("genEventTree")
+#    tMeasSherpa=trainingSherpa.Get(treename)
+#    tTrueSherpa=trainingSherpaGen.Get("genlevel/genEventTree")
 
-    dataTreeTrue = testFileGen.Get("genlevel/genEventTree")
+    dataTreeTrue = testFileGen.Get("genEventTree")
     dataTree = testFile.Get(treename)
 
     # sherpa stuff for systematics
-    corrsS,effS,responseS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas,tmVar=tmVar)
+#    corrsS,effS,responseS=getBinFactors(tTrueSherpa,tMeasSherpa,varTrue,bins,acceptanceCuts,args,varMeas=varMeas,tmVar=tmVar)
     corrs,eff,response=getBinFactors(tTrue,tMeas,varTrue,bins,acceptanceCuts,args,varMeas=varMeas,tmVar=tmVar)
 
-    corrDiffs = [abs(corrsS[i]-corrs[i]) for i in range(len(corrs))]
+#    corrDiffs = [abs(corrsS[i]-corrs[i]) for i in range(len(corrs))]
 
     print "Corrections:",corrs
     print "Efficiency:",eff
-    print "Corrections (Sherpa):",corrsS
-    print "Efficiency: (Sherpa)",effS
-    print "Correction diffs: ",corrDiffs
+#    print "Corrections (Sherpa):",corrsS
+#    print "Efficiency: (Sherpa)",effS
+#    print "Correction diffs: ",corrDiffs
     print "----------------"
     print "Acceptance:",trainingFileGen.Get("genlevel/genEventTree").GetEntries(extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+")")/trainingFileGen.Get("MMMM/results").GetBinContent(1),"=",trainingFileGen.Get("genlevel/genEventTree").GetEntries(extra+"&&(z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120"+idReq+")"),"/",trainingFileGen.Get("MMMM/results").GetBinContent(1)
 
@@ -393,19 +423,21 @@ def unfold():
         unfold.PrintTable(cout,dataHistTrue)
 
     unfoldedHist = unfold.Hreco()
-#    unfoldedHist=applyCorrs(corrs,dataHist)
-    unfoldedHistSherpa=applyCorrs(corrsS,dataHist)
+    unfoldedHist2=applyCorrs(corrs,dataHist)
+#    unfoldedHistSherpa=applyCorrs(corrsS,dataHist)
 
     for i in range(unfoldedHist.GetNbinsX()):
         print unfoldedHist.GetBinContent(i),dataHist.GetBinContent(i)*corrs[i],dataHist.GetBinContent(i),dataHistTrue.GetBinContent(i)
 
     # remove integrated lumi
+    pdb.set_trace()
     sig_fid = unfoldedHist.Integral()
     unfoldedHist.Scale(1/sig_fid)
+    unfoldedHist2.Scale(1/sig_fid)
     unfoldedHistWSyst = unfoldedHist.Clone()
     dataHist.Scale(1/dataHist.Integral())
-    sig_fidS = unfoldedHistSherpa.Integral()
-    unfoldedHistSherpa.Scale(1/sig_fidS)
+#    sig_fidS = unfoldedHistSherpa.Integral()
+#    unfoldedHistSherpa.Scale(1/sig_fidS)
     #dataHistTrue.Scale(1/dataHistTrue.Integral())
 
     # add systematics for unfolding
@@ -413,7 +445,7 @@ def unfold():
 #        print "Bin %s! Nominal value is: %s" % (str(i),str(unfoldedHistWSyst.GetBinContent(i)))
 #        print "Diff is %s" % str(abs(unfoldedHist.GetBinContent(i)-unfoldedHistSherpa.GetBinContent(i)))
 #        print "Error was: %s" % str(unfoldedHistWSyst.GetBinError(i))
-        newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHistSherpa.GetBinContent(i)-unfoldedHist.GetBinContent(i))**2 # compared to sherpa unfolded
+#        newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHistSherpa.GetBinContent(i)-unfoldedHist.GetBinContent(i))**2 # compared to sherpa unfolded
         newErrorSq = unfoldedHistWSyst.GetBinError(i)**2 + (unfoldedHist.GetBinContent(i)*0.05)**2 # flat 5%
 #        print "Error now: %s" % str(newErrorSq**0.5)
         unfoldedHistWSyst.SetBinError(i,newErrorSq**0.5)
@@ -436,6 +468,9 @@ def unfold():
     unfoldedHist.GetYaxis().SetTitle("1/#sigma_{fid} d #sigma_{fid}/d("+xTitle+")")
     unfoldedHist.GetXaxis().SetTitle(xTitle)
     unfoldedHist.Draw('p')
+    unfoldedHist2.SetLineColor(kRed)
+    unfoldedHist2.SetLineWidth(2)
+
 #    unfoldedHistSherpa.SetLineColor(kPink+10)
 
     dataHist.SetLineColor(kRed)
@@ -455,6 +490,7 @@ def unfold():
     #leg.AddEntry(dataHistTrue,"Truth","l")
 #    leg.AddEntry(dataHist,"Measured","l")
     leg.AddEntry(unfoldedHist,"Unfolded Data","pe")
+    leg.AddEntry(unfoldedHist2,"Unfolded Data (old)","l")
     leg.AddEntry(unfoldedHistWSyst,"Total Error","f")
 #    leg.AddEntry(unfoldedHistSherpa,"Unfolded via Sherpa","l")
 
@@ -514,6 +550,7 @@ def unfold():
     #redraw data hists
 #    dataHist.Draw("h same")
     unfoldedHist.Draw("p same")
+    unfoldedHist2.Draw("same")
 #    unfoldedHistSherpa.Draw("h same")
     leg.SetBorderSize(0)
     leg.SetFillStyle(0)
