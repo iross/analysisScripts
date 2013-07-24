@@ -1,4 +1,3 @@
-
 makeAnalysisTrees.py
 ----------------
 This script takes as input a root file and saves specified variables from selected events in a new root file. 
@@ -74,3 +73,12 @@ Helper functions that do the 'uniquifying' of the events and provides arbitratio
 analysisPlots.py
 ------------
 Ugly macro for dumping a bunch of plots.
+
+
+unfolding.py
+------------
+Handles the unfolding (surprise!)
+
+diffDist.sh
+-----------
+Actually makes the differential distributions, calling unfolding.py with all the binning/variable/etc. options.. It's all a bit messy and should be cleaned up a bit.
