@@ -21,7 +21,7 @@ frs=measureLeptonFakes("DATA_2012_noMuEG2012v_8TeV_final_selected.root",extra="&
 #binning=[100,200,300,400,600,800]
 #binning=[100,200,300,400,600,800,810]
 #binning=range(100,600,10)
-binning=[100,200,300,400,500,600,700,800,900,1000,1100]
+binning=[100,200,300,400,500,600,700,800]
 eeeeBG=makeBGhist(f,"eeee","mass",True,binning,extra="bestZmass>60&&bestZmass<120&&subBestZmass>60&&subBestZmass<120",binNorm=False,fakeRates=frs)
 f.cd()
 eeeeBG.Write()

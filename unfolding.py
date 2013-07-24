@@ -133,6 +133,7 @@ def makeResponse(trueTree,measTree,bins,accCuts,massReq,plotName,var):
     response.Hresponse().GetYaxis().SetTitle(plotName+" (Truth)")
     response.Hresponse().Draw("colz")
     c1.SaveAs("diffDists/"+plotName+"_responseMat.png")
+    c1.SaveAs("diffDists/"+plotName+"_responseMat.C")
     c1.Delete()
     return response
 
@@ -289,8 +290,11 @@ def unfold():
     parser.add_argument('--varmeas',type=str,required=True,default='',help='var name (meas tree)')
     parser.add_argument('--tmVar',type=str,required=True,default='',help='gen var name (meas tree)')
     parser.add_argument('--xTitle',type=str,required=True,default='',help='var name (meas tree)')
+    parser.add_argument('--xUnits',type=str,required=True,default='',help='var name (meas tree)')
     parser.add_argument('--legX',type=float,required=False,default=0.6,help='')
     parser.add_argument('--legY',type=float,required=False,default=0.5,help='')
+    parser.add_argument('--yMax',type=float,required=False,default=0.0,help='')
+
     parser.add_argument('--plotname',type=str,required=False,default='plotplot',help='[plotname].png')
     parser.add_argument('--testFile',type=str,required=False,default='sherpa_sm_selected.root',help='test file name')
     parser.add_argument('--testGen',type=str,required=False,default='/scratch/iross/temp_sherpa.root',help='test gen file name (since I\'m stupidly not storing genEventTree in the cleaned ntuples right now)')
@@ -423,17 +427,18 @@ def unfold():
         unfold.PrintTable(cout,dataHistTrue)
 
     unfoldedHist = unfold.Hreco()
-    unfoldedHist2=applyCorrs(corrs,dataHist)
+    unfoldedHist.SetLineWidth(2)
+#    unfoldedHist2=applyCorrs(corrs,dataHist)
 #    unfoldedHistSherpa=applyCorrs(corrsS,dataHist)
 
     for i in range(unfoldedHist.GetNbinsX()):
         print unfoldedHist.GetBinContent(i),dataHist.GetBinContent(i)*corrs[i],dataHist.GetBinContent(i),dataHistTrue.GetBinContent(i)
 
     # remove integrated lumi
-    pdb.set_trace()
+#    pdb.set_trace()
     sig_fid = unfoldedHist.Integral()
     unfoldedHist.Scale(1/sig_fid)
-    unfoldedHist2.Scale(1/sig_fid)
+#    unfoldedHist2.Scale(1/sig_fid)
     unfoldedHistWSyst = unfoldedHist.Clone()
     dataHist.Scale(1/dataHist.Integral())
 #    sig_fidS = unfoldedHistSherpa.Integral()
@@ -451,9 +456,12 @@ def unfold():
         unfoldedHistWSyst.SetBinError(i,newErrorSq**0.5)
 
 
-    ymax=max(unfoldedHist.GetMaximum(),unfoldedHist.GetMaximum())
-    #ymax=ymax*1.05*(1+1/ymax**0.5)
-    ymax=ymax*1.05*(1+ymax**0.5)
+    if args.yMax > 0: # if ymax specified in arguments...
+        ymax = args.yMax
+    else:
+        ymax=max(unfoldedHist.GetMaximum(),unfoldedHist.GetMaximum())
+        #ymax=ymax*1.05*(1+1/ymax**0.5)
+        ymax=ymax*1.05*(1+ymax**0.5)
 
     # draw options
     can=TCanvas("can","can",600,600)
@@ -465,18 +473,23 @@ def unfold():
     pad1.Draw()
     pad1.cd()
     unfoldedHist.GetYaxis().SetRangeUser(0,ymax)
-    unfoldedHist.GetYaxis().SetTitle("1/#sigma_{fid} d #sigma_{fid}/d("+xTitle+")")
-    unfoldedHist.GetXaxis().SetTitle(xTitle)
-    unfoldedHist.Draw('p')
-    unfoldedHist2.SetLineColor(kRed)
-    unfoldedHist2.SetLineWidth(2)
+    if args.xUnits == "":
+        unfoldedHist.GetYaxis().SetTitle("1/#sigma_{fid} d #sigma_{fid}/d("+xTitle+")")
+        unfoldedHist.GetXaxis().SetTitle(xTitle)
+    else:
+        unfoldedHist.GetYaxis().SetTitle("1/#sigma_{fid} d #sigma_{fid}/d("+xTitle+") (1/"+args.xUnits+")")
+        unfoldedHist.GetXaxis().SetTitle(xTitle+" ("+args.xUnits+")")
+
+    unfoldedHist.Draw('P')
+#    unfoldedHist2.SetLineColor(kRed)
+#    unfoldedHist2.SetLineWidth(2)
 
 #    unfoldedHistSherpa.SetLineColor(kPink+10)
 
     dataHist.SetLineColor(kRed)
     dataHist.SetLineWidth(2)
     dataHist.SetMarkerSize(0.00001)
-    #dataHist.Draw("h same")
+#    dataHist.Draw("HIST SAME")
     dataHistTrue.SetLineColor(kBlue)
     dataHistTrue.SetLineWidth(2)
     dataHistTrue.SetMarkerSize(0.00001)
@@ -489,8 +502,8 @@ def unfold():
     leg.SetFillColor(kWhite)
     #leg.AddEntry(dataHistTrue,"Truth","l")
 #    leg.AddEntry(dataHist,"Measured","l")
-    leg.AddEntry(unfoldedHist,"Unfolded Data","pe")
-    leg.AddEntry(unfoldedHist2,"Unfolded Data (old)","l")
+    leg.AddEntry(unfoldedHist,"Unfolded Data","lp")
+#    leg.AddEntry(unfoldedHist2,"Unfolded Data (old)","l")
     leg.AddEntry(unfoldedHistWSyst,"Total Error","f")
 #    leg.AddEntry(unfoldedHistSherpa,"Unfolded via Sherpa","l")
 
@@ -548,16 +561,16 @@ def unfold():
     unfoldedHistWSyst.SetFillStyle(3004)
     unfoldedHistWSyst.Draw("e2same") #draw errors as rectangle
     #redraw data hists
-#    dataHist.Draw("h same")
-    unfoldedHist.Draw("p same")
-    unfoldedHist2.Draw("same")
+#    dataHist.Draw("HIST SAME")
+    unfoldedHist.Draw("P SAME")
+#    unfoldedHist2.Draw("same")
 #    unfoldedHistSherpa.Draw("h same")
     leg.SetBorderSize(0)
     leg.SetFillStyle(0)
     leg.Draw()
     binrange=bins[len(bins)-1]-bins[0]
-    tex = TLatex(bins[0]+0.02*binrange,ymax*1.05,"CMS Preliminary 2012");
-    tex2 = TLatex(bins[0]+0.62*binrange,ymax*1.05,str(lumi)+"fb^{-1}, \sqrt{s}=8 TeV");
+    tex = TLatex(bins[0]+0.02*binrange,ymax*1.05,"CMS Preliminary");
+    tex2 = TLatex(bins[0]+0.52*binrange,ymax*1.05,"\sqrt{s} = 8 TeV, L = "+str(lumi)+" fb^{-1}");
     tex.Draw()
     tex2.Draw()
     pad1.RedrawAxis()
@@ -570,6 +583,7 @@ def unfold():
     pad2.Draw()
     pad2.cd()
     temp=unfoldedHist.Clone()
+    temp.Sumw2()
     temp.SetMarkerSize(1.0)
     temp.SetLineColor(kBlack)
     tempWSyst=unfoldedHistWSyst.Clone()
@@ -577,6 +591,7 @@ def unfold():
     tempWSyst.SetFillColor(kGray+2)
     tempWSyst.SetFillStyle(3004)
     temp.SetLineColor(kBlack)
+#    pdb.set_trace()
     temp.Divide(trainingTrue)
     tempWSyst.Divide(trainingTrue)
     temp.GetYaxis().SetRangeUser(0.0,2.0)
@@ -588,12 +603,22 @@ def unfold():
     temp.SetLabelSize(0.0,"X")
     temp.SetLabelSize(0.13,"Y")
 
+    for i in range(temp.GetNbinsX()):
+        print "bin ",i
+        print temp.GetBinError(i)
+        print tempWSyst.GetBinError(i)
+
     #temp.SetLabelOffset(0.25,"Y")
     temp.Draw()
     tempWSyst.Draw("e2same")
-    temp.Draw("psame")
+    line=TLine(temp.GetXaxis().GetXmin(),1.0,temp.GetXaxis().GetXmax(),1.0)
+    line.SetLineColor(kGray+2)
+    line.SetLineWidth(1)
+    line.Draw()
+    temp.Draw("pesame")
     can.cd()
     can.SaveAs("diffDists/"+args.plotname+".png")
+    can.SaveAs("diffDists/"+args.plotname+".pdf")
     can.SaveAs("diffDists/"+args.plotname+".root")
     can.SaveAs("diffDists/"+args.plotname+".C")
     can.Delete()

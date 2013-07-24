@@ -35,16 +35,16 @@ def parseLeps(outTree):
     """Parse the leptons in the event into a sorted list of lepton types"""
     leplist=[]
     lepaccess=[]
-    if "eeee" in outTree:
+    if "eeee" in outTree or "eleEleEleEle" in outTree:
         leplist=['e','e','e','e']
         lepaccess=['z1l1','z1l2','z2l1','z2l2']
-    elif "eemm" in outTree:
+    elif "eemm" in outTree or "eleEleMuMu" in outTree:
         leplist=['e','e','m','m']
         lepaccess=['z1l1','z1l2','z2l1','z2l2']
-    elif "mmee" in outTree:
+    elif "mmee" in outTree or "muMuEleEle" in outTree:
         leplist=['m','m','e','e']
         lepaccess=['z1l1','z1l2','z2l1','z2l2']
-    elif "mmmm" in outTree:
+    elif "mmmm" in outTree or "muMuMuMu" in outTree:
         leplist=['m','m','m','m']
         lepaccess=['z1l1','z1l2','z2l1','z2l2']
     elif "eee" in outTree:
@@ -80,8 +80,11 @@ def main(args):
 
     # loop over trees in a file
     stuff=[]
-    for t in fin.GetListOfKeys():
-        stuff.append(t)
+#    for t in fin.GetListOfKeys():
+#        stuff.append(t)
+    stuff.append(fin.Get("eleEleEleEleEventTreeFinal/eventTree"))
+    stuff.append(fin.Get("muMuMuMuEventTreeFinal/eventTree"))
+    stuff.append(fin.Get("muMuEleEleEventTreeFinal/eventTree"))
 
     for t in stuff:
         weight=1.0
@@ -90,15 +93,20 @@ def main(args):
         print t.GetName()
         if "corr" in t.GetName() : continue
 
-        if t.ReadObj().Class().InheritsFrom(TTree.Class()) is False:
-            print t.GetName(),"is not a TTree.. skipping"
-            continue
+#        if t.ReadObj().Class().InheritsFrom(TTree.Class()) is False:
+#            print t.GetName(),"is not a TTree.. skipping"
+#            continue
         tree = fin.Get(t.GetName())
-        newtree = TTree(t.GetName()+"_corr",t.GetName()+"_corr")
 
+        newtree = TTree(t.GetDirectory().GetName()+"_corr",t.GetDirectory().GetName()+"_corr")
+#        newtree = TTree(t.GetName()+"_corr",t.GetName()+"_corr")
+
+        #temp
+        tree=t
         print "Working on",t.GetName(),":",tree.GetEntries(),"events found"
 
-        leps,leplegs=parseLeps(t.GetName())
+        leps,leplegs=parseLeps(t.GetDirectory().GetName())
+#        leps,leplegs=parseLeps(t.GetName())
         n={args.branch: N.zeros(1,dtype=float), "scale_up": N.zeros(1,dtype=float), "scale_down": N.zeros(1,dtype=float), "mstw_ct": N.zeros(1,dtype=float)}
         pt=0.0
         eta=0.0
@@ -133,6 +141,7 @@ def main(args):
             n["scale_down"][0]=down
             n["mstw_ct"][0]=mstw_ct
             newtree.Fill()
+        tree.GetDirectory().cd()
         newtree.Write()
         tree.AddFriend(newtree.GetName())
         tree.Write("",TObject.kOverwrite)

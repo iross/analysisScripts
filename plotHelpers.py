@@ -14,10 +14,10 @@ def makeHist(tree, var, cuts, nbin, xmin, xmax, overflow=False, customBinning=Fa
     h = TH1F(name,name,nbin,xmin,xmax)
     if customBinning:
         h = TH1F(name,name,len(bins)-1,array('d',bins))
-    if overflow:
-        h.SetBinContent(nbin,h.GetBinContent(nbin)+h.GetBinContent(nbin+1))
     h.Sumw2()
     tree.Draw(var+">>"+name,cuts,"goff")
+    if overflow:
+        h.SetBinContent(nbin,h.GetBinContent(nbin)+h.GetBinContent(nbin+1))
     if binNorm:
         h.Scale(1.0,"width")
     return h
@@ -157,11 +157,12 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     c1=TCanvas("can","can",600,600)
     eleFr = TGraphAsymmErrors()
     eleFr.BayesDivide(enum,eden)
-    eleFr.GetYaxis().SetRangeUser(0,0.5)
-    eleFr.GetXaxis().SetTitle(varNice)
+    eleFr.GetYaxis().SetRangeUser(0,0.35)
+    eleFr.GetXaxis().SetTitle("e p_{T} (GeV)")
     eleFr.GetYaxis().SetTitle("e Fake Rate")
     eleFr.Draw("ap")
     c1.SaveAs("ele_FR_"+var+".C")
+    c1.SaveAs("ele_FR_"+var+".pdf")
     c1.SaveAs("ele_FR_"+var+".png")
     enum.Draw()
     c1.SaveAs("ele_num_"+var+".C")
@@ -171,11 +172,12 @@ def measureLeptonFakes(file, var="z2l1Pt", extra="", customBinning=False, bins=[
     c1.SaveAs("ele_den_"+var+".png")
     muFr = TGraphAsymmErrors()
     muFr.BayesDivide(mnum,mden)
-    muFr.GetYaxis().SetRangeUser(0,0.5)
-    muFr.GetXaxis().SetTitle(var)
+    muFr.GetYaxis().SetRangeUser(0,0.35)
+    muFr.GetXaxis().SetTitle("#mu p_{T} (GeV)")
     muFr.GetYaxis().SetTitle("#mu Fake Rate")
     muFr.Draw("ap")
     c1.SaveAs("mu_FR_"+var+".C")
+    c1.SaveAs("mu_FR_"+var+".pdf")
     c1.SaveAs("mu_FR_"+var+".png")
     mnum.Draw()
     c1.SaveAs("mu_num_"+var+".C")
@@ -218,10 +220,10 @@ def applyFakes(file,extra="1",var="mass",lowZ1=True,customBinning=False,bins=[0,
             errs[reg]=0
             continue
         if lowZ1:
-            t=t.CopyTree("mass>100&&mass<600&&((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<40&&z2Mass>40&&z2Mass<120))&&"+extra)
+            t=t.CopyTree("((z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120)||(z1Mass>12&&z1Mass<40&&z2Mass>40&&z2Mass<120))&&"+extra)
 #            t=t.CopyTree("mass>100&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         else:
-            t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600&&"+extra)
+            t=t.CopyTree("z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600&&"+extra)
 #            t=t.CopyTree("mass>100&&z1Mass>40&&z1Mass<120&&z2Mass>12&&z2Mass<120&&mass<600&&z1Mass>60&&z1Mass<120&&z2Mass>60&&z2Mass<120")
         n=t.GetEntries()
         if "AA" in reg:
