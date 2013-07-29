@@ -8,8 +8,9 @@ Usage:
 ```
 python makeAnalysisTrees.py --file=[inputFilepath].root --out=[outputFilepath].root
 ```
-By default, this spits out full selected trees, trees for BG estimation, trees for SS BG estimate control, and summed trees.
+By default, this spits out full selected trees, trees for BG estimation, trees for SS BG estimate control, and summed trees. It can take quite a while, since it's looping over all events in an incredibly inefficient way... It's possible to make the ntuples using the useLeadingOnly option to get the selected events, then run them again for the BG-like events, but this doubles the number of ntuples running around.
 
+Example content of a processed ntuple:
 ```
 KEY: TTree    mmeeAI_SSFinal;1        mmeeAI_SSFinal
 KEY: TTree    eemmAIFinal;1   eemmAIFinal
@@ -75,10 +76,44 @@ analysisPlots.py
 Ugly macro for dumping a bunch of plots.
 
 
-unfolding.py
-------------
-Handles the unfolding (surprise!)
+Differential Distributions
+--------------------------
+Current status: a functional mess.
 
-diffDist.sh
------------
+Currently, the final ntuples (meaning the ones after the makeAnalysisTrees step) don't _quite_ have the variables in the way they're wanted.
+So there's a quick and dirty script for getting them all shoehorned into the ntuples. The addDiffDistFriends.py script takes the file name and the trees. To the root file, it adds some friend trees which hold the 'new' variables (which are used for plotting). Any variable from the base ntuples can be plotted of course, but this was (unfortunately) the easiest way I could find to get some of the variables to work.
+
+```
+python addDiffDistFriends.py --file=DATA_test.root --trees "eeeeFinal" "mmmmFinal" "mmeeFinal" "llllTree"
+```
+
+adds the friend trees, and 
+
+```
+sh diffDist.sh
+```
+makes the final plots
+
+# addDiffDistFriends.py
+Adds trees containing the final variables to be plotted to the ntuple. Only necessary because the variables weren't added at ntuple creation, and I needed to hack together something that worked without having to rerun the ntuples...
+
+# unfolding.py
+Handles the unfolding (surprise!). Takes loads of arguments:
+```
+tree is the name of the tree to plot measured 
+nice is just a nice name for plot saving purposes
+vartrue is the name of the GEN truth variable (as saved in the genlevel/genEventTree in the base ntuple)
+varmeas is the name of the measured variable (as saved in the xxyyFinal trees in the processed ntuple)
+tmVar is the name of the truth variable (as saved in the the xxyyFinal trees in the processed ntuple... it's only used for half-implemented purity checks)
+bins are self explanatory
+plotname is used in the saved figure name
+lumi is the integrated lumi
+xTitle is the title for the x axis
+xUnits is the units
+legX and legY are the position of the legend
+wt is the weight branch
+testFile is the name of the dataset to be unfolded
+```
+
+# diffDist.sh
 Actually makes the differential distributions, calling unfolding.py with all the binning/variable/etc. options.. It's all a bit messy and should be cleaned up a bit.
